@@ -15,10 +15,11 @@ export default function LegalPage({
   sections: LegalSection[];
 }) {
   return (
-    <main className="min-h-screen bg-gray-50 py-10 px-4">
-      <article className="mx-auto max-w-2xl rounded-2xl bg-white p-6 shadow-sm sm:p-10">
-        <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">MySwarg</p>
-        <h1 className="mt-1 text-3xl font-bold text-gray-900">{title}</h1>
+    <main className="min-h-screen bg-canvas py-10 px-4">
+      <article className="mx-auto max-w-2xl rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-200/70 sm:p-10">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/logo.png" alt="MySwarg" className="w-28" />
+        <h1 className="mt-6 text-3xl font-semibold tracking-tight text-gray-900">{title}</h1>
         {updated && <p className="mt-1 text-sm text-gray-500">Effective {updated}</p>}
         {intro && <p className="mt-4 text-gray-700">{intro}</p>}
 

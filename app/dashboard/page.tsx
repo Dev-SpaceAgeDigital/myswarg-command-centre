@@ -119,9 +119,9 @@ export default function DashboardPage() {
   }, []);
 
   const subscriptionData = [
-    { name: 'Active',  value: societies.filter(s => s.subscriptionStatus === 'ACTIVE').length  || stats?.societies || 0, color: '#16A34A' },
-    { name: 'Trial',   value: societies.filter(s => s.subscriptionStatus === 'TRIAL').length   || 0,                      color: '#D97706' },
-    { name: 'Expired', value: societies.filter(s => s.subscriptionStatus === 'EXPIRED').length || 0,                      color: '#DC2626' },
+    { name: 'Active',  value: societies.filter(s => s.subscriptionStatus === 'ACTIVE').length  || stats?.societies || 0, color: '#138A79' },
+    { name: 'Trial',   value: societies.filter(s => s.subscriptionStatus === 'TRIAL').length   || 0,                      color: '#FFD32C' },
+    { name: 'Expired', value: societies.filter(s => s.subscriptionStatus === 'EXPIRED').length || 0,                      color: '#F87171' },
   ];
 
   if (loading) {
@@ -141,34 +141,36 @@ export default function DashboardPage() {
   return (
     <div>
       {/* ── Welcome Banner ─────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gray-950 rounded-3xl p-6 sm:p-8 mb-6 shadow-xl shadow-blue-950/10">
+      <div className="relative overflow-hidden bg-hero rounded-3xl p-6 sm:p-8 mb-6 shadow-xl shadow-blue-900/20">
         <div className="absolute inset-0 bg-grid [mask-image:linear-gradient(to_right,transparent,black_60%)]" />
-        <div className="absolute -top-24 right-10 w-80 h-80 rounded-full bg-blue-600/40 blur-[90px]" />
-        <div className="absolute -bottom-32 left-1/3 w-72 h-72 rounded-full bg-indigo-600/30 blur-[90px]" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/mark.png" alt="" aria-hidden className="pointer-events-none absolute -right-10 -bottom-14 w-56 opacity-[0.08] rotate-12" />
+        <span className="heart-drift pointer-events-none absolute right-[30%] bottom-2 text-lg">💛</span>
+        <span className="heart-drift pointer-events-none absolute right-[8%] bottom-4 text-sm" style={{ animationDelay: '3s' }}>💛</span>
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <p className="text-blue-200/80 text-sm font-medium">
-              {(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()}, Admin
+            <p className="text-sun-300 text-sm font-semibold flex items-center gap-1.5">
+              {(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()}, Admin <span className="inline-block animate-wiggle origin-[70%_70%]">👋</span>
             </p>
-            <p className="text-white text-2xl sm:text-[28px] font-semibold tracking-tight mt-1">Here&apos;s your Nivasi overview</p>
-            <p className="text-gray-400 text-xs mt-2">
+            <p className="font-display text-white text-2xl sm:text-[30px] font-semibold tracking-tight mt-1">Here&apos;s how your MySwarg family is doing</p>
+            <p className="text-white/60 text-xs mt-2">
               {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
-          <div className="grid grid-cols-3 md:flex rounded-2xl bg-white/[0.05] ring-1 ring-inset ring-white/10 backdrop-blur-sm divide-x divide-white/10">
+          <div className="grid grid-cols-3 md:flex rounded-2xl bg-white/10 ring-1 ring-inset ring-white/15 backdrop-blur-sm divide-x divide-white/15">
             <div className="px-3 sm:px-6 py-3.5 min-w-0">
-              <p className="text-gray-400 text-[10px] sm:text-[11px] font-medium uppercase tracking-wider">Societies</p>
+              <p className="text-white/60 text-[10px] sm:text-[11px] font-medium uppercase tracking-wider">Societies</p>
               <p className="text-lg sm:text-2xl font-semibold text-white mt-1 tabular-nums truncate">{stats?.societies ?? 0}</p>
             </div>
             <div className="px-3 sm:px-6 py-3.5 min-w-0">
-              <p className="text-gray-400 text-[10px] sm:text-[11px] font-medium uppercase tracking-wider">MRR</p>
-              <p className="text-lg sm:text-2xl font-semibold text-emerald-400 mt-1 tabular-nums truncate">
+              <p className="text-white/60 text-[10px] sm:text-[11px] font-medium uppercase tracking-wider">MRR</p>
+              <p className="text-lg sm:text-2xl font-semibold text-mint-200 mt-1 tabular-nums truncate">
                 ₹{(subscriptions?.monthlyRevenue ?? 0).toLocaleString('en-IN')}
               </p>
             </div>
             <div className="px-3 sm:px-6 py-3.5 min-w-0">
-              <p className="text-gray-400 text-[10px] sm:text-[11px] font-medium uppercase tracking-wider">Expiring</p>
-              <p className="text-lg sm:text-2xl font-semibold text-orange-400 mt-1 tabular-nums truncate">{subscriptions?.totalExpiring30 ?? 0}</p>
+              <p className="text-white/60 text-[10px] sm:text-[11px] font-medium uppercase tracking-wider">Expiring</p>
+              <p className="text-lg sm:text-2xl font-semibold text-sun-300 mt-1 tabular-nums truncate">{subscriptions?.totalExpiring30 ?? 0}</p>
             </div>
           </div>
         </div>
@@ -179,7 +181,7 @@ export default function DashboardPage() {
         {[
           { label: 'Add Society',    icon: Plus,          href: '/dashboard/societies',     bg: 'bg-blue-50 group-hover:bg-blue-600',      text: 'text-blue-600 group-hover:text-white',    hover: 'hover:border-blue-200'    },
           { label: 'Record Payment', icon: CreditCard,    href: '/dashboard/subscriptions', bg: 'bg-emerald-50 group-hover:bg-emerald-600', text: 'text-emerald-600 group-hover:text-white', hover: 'hover:border-emerald-200' },
-          { label: 'New Ticket',     icon: MessageSquare, href: '/dashboard/support',       bg: 'bg-orange-50 group-hover:bg-orange-500',   text: 'text-orange-600 group-hover:text-white',  hover: 'hover:border-orange-200'  },
+          { label: 'New Ticket',     icon: MessageSquare, href: '/dashboard/support',       bg: 'bg-sun-100 group-hover:bg-sun-400',      text: 'text-sun-700 group-hover:text-blue-900',  hover: 'hover:border-sun-300'  },
           { label: 'Send Reminders', icon: Send,          href: '/dashboard/subscriptions', bg: 'bg-purple-50 group-hover:bg-purple-600',   text: 'text-purple-600 group-hover:text-white',  hover: 'hover:border-purple-200'  },
         ].map(({ label, icon: Icon, href, bg, text, hover }) => (
           <button key={label} onClick={() => router.push(href)}
@@ -210,28 +212,28 @@ export default function DashboardPage() {
               <h2 className="text-base font-semibold text-gray-900">Revenue Overview</h2>
               <p className="text-xs text-gray-400 mt-0.5">Last 6 months</p>
             </div>
-            <span className="text-xs bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/15 font-medium px-2.5 py-1 rounded-full">↑ 23% growth</span>
+            <span className="text-xs bg-sun-100 text-sun-800 ring-1 ring-inset ring-sun-500/30 font-semibold px-2.5 py-1 rounded-full">🚀 23% growth</span>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={revenueData} barSize={32}>
               <defs>
                 <linearGradient id="revenueBar" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#3E66F4" />
-                  <stop offset="100%" stopColor="#6289FA" stopOpacity={0.55} />
+                  <stop offset="0%" stopColor="#138A79" />
+                  <stop offset="100%" stopColor="#69CDB9" stopOpacity={0.6} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="4 4" stroke="#EEF1F6" vertical={false} />
-              <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94A0B4' }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="4 4" stroke="#E6EFEC" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#8EA19C' }} axisLine={false} tickLine={false} />
               <YAxis
-                tick={{ fontSize: 12, fill: '#94A0B4' }}
+                tick={{ fontSize: 12, fill: '#8EA19C' }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`}
               />
               <Tooltip
                 formatter={(value) => [`₹${Number(value).toLocaleString()}`, 'Revenue']}
-                cursor={{ fill: '#F1F4F9', radius: 8 }}
-                contentStyle={{ borderRadius: '12px', border: '1px solid #E3E8F0', boxShadow: '0 12px 20px -4px rgba(16,24,40,0.08)' }}
+                cursor={{ fill: '#EBFAF6', radius: 8 }}
+                contentStyle={{ borderRadius: '12px', border: '1px solid #E0E9E6', boxShadow: '0 12px 20px -4px rgba(16,24,40,0.08)' }}
               />
               <Bar dataKey="revenue" fill="url(#revenueBar)" radius={[8, 8, 0, 0]} />
             </BarChart>
@@ -303,8 +305,8 @@ export default function DashboardPage() {
             ))}
             {societies.length === 0 && (
               <div className="text-center py-8 text-gray-400">
-                <Building2 size={32} className="mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No societies yet</p>
+                <div className="text-4xl mb-2 animate-float">🏡</div>
+                <p className="text-sm">No societies yet — your first home is just a click away!</p>
               </div>
             )}
           </div>
@@ -328,7 +330,7 @@ export default function DashboardPage() {
               ))
             }
             {societies.length === 0 && (
-              <p className="text-sm text-gray-400 text-center py-4">No activity yet</p>
+              <p className="text-sm text-gray-400 text-center py-4">No activity yet ✨</p>
             )}
           </div>
         </div>

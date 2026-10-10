@@ -5,62 +5,98 @@
    up the refreshed look without touching component logic. */
 
 @theme {
-  /* Cool, slightly blue-tinted neutrals */
-  --color-gray-50:  #F8FAFC;
-  --color-gray-100: #F1F4F9;
-  --color-gray-200: #E3E8F0;
-  --color-gray-300: #CAD2DE;
-  --color-gray-400: #94A0B4;
-  --color-gray-500: #667085;
-  --color-gray-600: #4A5568;
-  --color-gray-700: #344054;
-  --color-gray-800: #1D2939;
-  --color-gray-900: #101828;
-  --color-gray-950: #0B1120;
+  /* Fresh, faintly green-tinted neutrals */
+  --color-gray-50:  #F7FAF9;
+  --color-gray-100: #EEF4F2;
+  --color-gray-200: #E0E9E6;
+  --color-gray-300: #C6D3CF;
+  --color-gray-400: #8EA19C;
+  --color-gray-500: #62756F;
+  --color-gray-600: #485A54;
+  --color-gray-700: #33433E;
+  --color-gray-800: #1F2C28;
+  --color-gray-900: #13201C;
+  --color-gray-950: #091512;
 
-  /* Vivid royal-blue primary */
-  --color-blue-50:  #EEF3FF;
-  --color-blue-100: #DDE7FF;
-  --color-blue-200: #C0D1FF;
-  --color-blue-300: #94B0FE;
-  --color-blue-400: #6289FA;
-  --color-blue-500: #3E66F4;
-  --color-blue-600: #2A50E6;
-  --color-blue-700: #213FC9;
-  --color-blue-800: #2037A2;
-  --color-blue-900: #1F3380;
-  --color-blue-950: #16204D;
+  /* MySwarg teal — the "blue" scale is remapped so every primary
+     surface in the app picks up the brand colour (600 = logo teal). */
+  --color-blue-50:  #EBFAF6;
+  --color-blue-100: #D0F3EA;
+  --color-blue-200: #A3E5D6;
+  --color-blue-300: #69CDB9;
+  --color-blue-400: #31AC97;
+  --color-blue-500: #138A79;
+  --color-blue-600: #095A51;
+  --color-blue-700: #074B44;
+  --color-blue-800: #073E39;
+  --color-blue-900: #073430;
+  --color-blue-950: #021E1B;
 
-  /* Soft, layered elevation */
-  --shadow-xs: 0 1px 2px 0 rgb(16 24 40 / 0.04);
-  --shadow-sm: 0 1px 2px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.06);
-  --shadow:    0 1px 3px 0 rgb(16 24 40 / 0.08), 0 1px 2px -1px rgb(16 24 40 / 0.06);
-  --shadow-md: 0 4px 8px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.04);
-  --shadow-lg: 0 12px 20px -4px rgb(16 24 40 / 0.08), 0 4px 8px -4px rgb(16 24 40 / 0.04);
-  --shadow-xl: 0 20px 28px -6px rgb(16 24 40 / 0.10), 0 8px 10px -6px rgb(16 24 40 / 0.05);
-  --shadow-2xl: 0 28px 56px -12px rgb(16 24 40 / 0.22);
+  /* Deep evergreen used for gradient ends */
+  --color-indigo-50:  #E8F5F2;
+  --color-indigo-100: #C9E7E0;
+  --color-indigo-200: #95CFC2;
+  --color-indigo-300: #5BB1A0;
+  --color-indigo-400: #2B8C7B;
+  --color-indigo-500: #0D6E61;
+  --color-indigo-600: #064A42;
+  --color-indigo-700: #053D37;
+  --color-indigo-800: #04302B;
+  --color-indigo-900: #032621;
+  --color-indigo-950: #011613;
+
+  /* Sunshine yellow from the heart in the logo */
+  --color-sun-50:  #FFFBEA;
+  --color-sun-100: #FFF4C5;
+  --color-sun-200: #FFEA8F;
+  --color-sun-300: #FFDE5C;
+  --color-sun-400: #FFD32C;
+  --color-sun-500: #F2B90B;
+  --color-sun-600: #D19600;
+  --color-sun-700: #A67102;
+  --color-sun-800: #885909;
+  --color-sun-900: #744A0D;
+
+  /* Mint surface from the splash screen */
+  --color-mint-50:  #F2FEFC;
+  --color-mint-100: #E0FAF4;
+  --color-mint-200: #C2F2E7;
+
+  /* Soft, layered elevation with a hint of teal */
+  --shadow-xs: 0 1px 2px 0 rgb(9 40 36 / 0.04);
+  --shadow-sm: 0 1px 2px 0 rgb(9 40 36 / 0.04), 0 1px 3px 0 rgb(9 40 36 / 0.06);
+  --shadow:    0 1px 3px 0 rgb(9 40 36 / 0.08), 0 1px 2px -1px rgb(9 40 36 / 0.06);
+  --shadow-md: 0 4px 8px -2px rgb(9 40 36 / 0.08), 0 2px 4px -2px rgb(9 40 36 / 0.04);
+  --shadow-lg: 0 12px 20px -4px rgb(9 40 36 / 0.09), 0 4px 8px -4px rgb(9 40 36 / 0.04);
+  --shadow-xl: 0 20px 28px -6px rgb(9 40 36 / 0.11), 0 8px 10px -6px rgb(9 40 36 / 0.05);
+  --shadow-2xl: 0 28px 56px -12px rgb(9 40 36 / 0.24);
+
+  --font-display: var(--font-lexend), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
   --animate-fade-in: fade-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-fade-up: fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-scale-in: scale-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-wiggle: wiggle 2.4s ease-in-out infinite;
+  --animate-heartbeat: heartbeat 1.6s ease-in-out infinite;
 }
 
 @theme inline {
-  --color-brand-50: #EEF3FF;
-  --color-brand-100: #DDE7FF;
-  --color-brand-200: #C0D1FF;
-  --color-brand-300: #94B0FE;
-  --color-brand-400: #6289FA;
-  --color-brand-500: #2A50E6;
-  --color-brand-600: #3E66F4;
-  --color-brand-700: #213FC9;
-  --color-brand-800: #2037A2;
-  --color-brand-900: #1F3380;
-  --color-navy: #0B1120;
+  --color-brand-50: #EBFAF6;
+  --color-brand-100: #D0F3EA;
+  --color-brand-200: #A3E5D6;
+  --color-brand-300: #69CDB9;
+  --color-brand-400: #31AC97;
+  --color-brand-500: #095A51;
+  --color-brand-600: #138A79;
+  --color-brand-700: #074B44;
+  --color-brand-800: #073E39;
+  --color-brand-900: #073430;
+  --color-navy: #073430;
   --color-success: #16A34A;
   --color-warning: #D97706;
   --color-danger: #DC2626;
-  --color-background: #F5F7FB;
+  --color-background: #F3FAF8;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
@@ -97,7 +133,7 @@ html { scroll-behavior: smooth; }
 *:focus { outline: none; }
 *:focus-visible { outline: 2px solid var(--color-blue-500); outline-offset: 2px; }
 
-h1, h2, h3 { letter-spacing: -0.015em; }
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; }
 
 /* ─── Form controls ─────────────────────────────────────────────────────────
    Bordered inputs get a soft focus halo instead of a flat border change. */
@@ -110,26 +146,26 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 }
 :where(input, select, textarea)[class*="border"]:focus {
   border-color: var(--color-blue-500);
-  box-shadow: 0 0 0 4px rgb(62 102 244 / 0.12);
+  box-shadow: 0 0 0 4px rgb(19 138 121 / 0.14);
 }
 :where(input, select, textarea)::placeholder { color: var(--color-gray-400); }
 
 select[class*="border"] {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2394A0B4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238EA19C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 16px;
   padding-right: 2.25rem;
 }
 
-/* Primary buttons get a subtle top highlight and coloured glow */
+/* Primary buttons: brand teal with a soft glow and a lift on hover */
 button.bg-blue-600:not(:disabled), a.bg-blue-600 {
-  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.10), rgb(255 255 255 / 0));
-  box-shadow: 0 1px 2px rgb(16 24 40 / 0.08), 0 4px 12px -2px rgb(42 80 230 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.12);
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.12), rgb(255 255 255 / 0));
+  box-shadow: 0 1px 2px rgb(9 40 36 / 0.10), 0 4px 12px -2px rgb(9 90 81 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.14);
 }
 button.bg-blue-600:not(:disabled):hover, a.bg-blue-600:hover {
-  box-shadow: 0 1px 2px rgb(16 24 40 / 0.08), 0 8px 18px -4px rgb(42 80 230 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.12);
+  box-shadow: 0 1px 2px rgb(9 40 36 / 0.10), 0 10px 20px -4px rgb(9 90 81 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.14);
 }
 button:not(:disabled):active { transform: translateY(0.5px); }
 
@@ -147,7 +183,7 @@ tbody tr { transition: background-color 120ms ease; }
 /* ─── Overlays & motion ─────────────────────────────────────────────────── */
 
 .modal-backdrop {
-  background: rgb(11 17 32 / 0.45);
+  background: rgb(7 52 48 / 0.35);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   animation: fade-in 0.2s ease both;
@@ -175,6 +211,24 @@ tbody tr { transition: background-color 120ms ease; }
   0%, 100% { transform: translate3d(0, 0, 0); }
   50% { transform: translate3d(0, -14px, 0); }
 }
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(-10deg); }
+  20% { transform: rotate(10deg); }
+  30% { transform: rotate(-6deg); }
+  40% { transform: rotate(0deg); }
+}
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.18); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.12); }
+}
+@keyframes drift {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(-120px) rotate(18deg); opacity: 0; }
+}
 
 @keyframes shimmer {
   0% { background-position: -200% 0; }
@@ -190,8 +244,27 @@ tbody tr { transition: background-color 120ms ease; }
 
 /* Subtle dot grid used behind hero surfaces */
 .bg-grid {
-  background-image: radial-gradient(rgb(255 255 255 / 0.09) 1px, transparent 1px);
+  background-image: radial-gradient(rgb(255 255 255 / 0.10) 1px, transparent 1px);
   background-size: 22px 22px;
+}
+
+/* Brand hero surface: deep teal with sunshine and mint glows */
+.bg-hero {
+  background:
+    radial-gradient(60% 80% at 100% 0%, rgb(255 211 44 / 0.28), transparent 60%),
+    radial-gradient(50% 70% at 0% 100%, rgb(105 205 185 / 0.28), transparent 65%),
+    linear-gradient(135deg, #0B6B60 0%, #095A51 45%, #06433C 100%);
+}
+
+/* Floating hearts that drift up from hero surfaces */
+.heart-drift { animation: drift 7s ease-in infinite; }
+
+/* Page canvas: a gentle mint wash at the top of the viewport */
+.bg-canvas {
+  background:
+    radial-gradient(1200px 400px at 70% -120px, rgb(255 211 44 / 0.10), transparent 70%),
+    radial-gradient(900px 380px at 10% -140px, rgb(105 205 185 / 0.18), transparent 70%),
+    var(--color-background);
 }
 
 /* Recharts polish */

@@ -7,7 +7,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
       <div className="w-16 h-16 bg-red-50 ring-1 ring-inset ring-red-100 rounded-2xl flex items-center justify-center mb-5 shadow-sm">
         <AlertCircle size={28} className="text-red-500" />
       </div>
-      <h2 className="text-xl font-semibold tracking-tight text-gray-900 mb-2">Something went wrong</h2>
+      <h2 className="text-xl font-semibold tracking-tight text-gray-900 mb-2">Oops, something went wrong 😅</h2>
       <p className="text-gray-500 text-sm mb-6 max-w-sm">{error.message}</p>
       <button
         onClick={reset}

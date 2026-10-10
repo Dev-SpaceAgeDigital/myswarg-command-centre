@@ -104,74 +104,91 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex bg-white">
       {/* Left panel */}
-      <div className="hidden lg:flex lg:w-[55%] flex-col justify-between relative overflow-hidden bg-gray-950 p-12">
+      <div className="hidden lg:flex lg:w-[55%] flex-col justify-between relative overflow-hidden bg-hero p-12">
         <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]" />
-        <div className="absolute -top-40 -left-32 w-[520px] h-[520px] rounded-full bg-blue-600/30 blur-[120px]" />
-        <div className="absolute -bottom-48 -right-24 w-[480px] h-[480px] rounded-full bg-indigo-600/25 blur-[120px]" />
+        <div className="absolute -top-32 -right-24 w-[420px] h-[420px] rounded-full bg-sun-400/25 blur-[110px]" />
+
+        {/* Floating hearts */}
+        {[
+          { left: '12%', bottom: '18%', delay: '0s', size: 'text-lg' },
+          { left: '38%', bottom: '8%', delay: '2.2s', size: 'text-2xl' },
+          { left: '64%', bottom: '22%', delay: '4.1s', size: 'text-base' },
+          { left: '84%', bottom: '10%', delay: '1.3s', size: 'text-xl' },
+        ].map((h, i) => (
+          <span
+            key={i}
+            className={`heart-drift pointer-events-none absolute ${h.size}`}
+            style={{ left: h.left, bottom: h.bottom, animationDelay: h.delay }}
+          >
+            💛
+          </span>
+        ))}
 
         {/* Brand */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-400 via-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/40 ring-1 ring-white/20">
-            <span className="text-white text-lg font-bold">N</span>
+          <div className="w-11 h-11 bg-mint-50 rounded-2xl flex items-center justify-center shadow-lg shadow-black/20 ring-2 ring-white/30">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/mark.png" alt="MySwarg" className="w-9 h-9 object-contain" />
           </div>
           <div className="leading-tight">
-            <p className="text-white font-semibold tracking-tight">Nivasi</p>
-            <p className="text-blue-300/80 text-[11px] font-medium uppercase tracking-[0.14em]">Command Centre</p>
+            <p className="font-display text-white text-lg font-semibold tracking-tight">MySwarg</p>
+            <p className="text-sun-300 text-[11px] font-semibold uppercase tracking-[0.14em]">Command Centre</p>
           </div>
         </div>
 
         {/* Hero copy */}
         <div className="relative z-10 max-w-lg animate-fade-up">
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium text-blue-200 bg-blue-500/10 ring-1 ring-inset ring-blue-400/20 mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px] shadow-emerald-400" />
-            Admin console
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold text-blue-900 bg-sun-400 shadow-lg shadow-sun-500/30 mb-6">
+            <span className="animate-wiggle inline-block">👋</span>
+            Welcome home, admin
           </span>
-          <h1 className="text-white text-[44px] leading-[1.1] font-semibold tracking-tight">
-            Every society,{' '}
-            <span className="bg-gradient-to-r from-blue-300 via-blue-400 to-indigo-300 bg-clip-text text-transparent">
-              one command centre.
+          <h1 className="text-white text-[46px] leading-[1.08] font-semibold tracking-tight">
+            Every home,{' '}
+            <span className="relative inline-block text-sun-300">
+              a little Swarg.
+              <svg className="absolute left-0 -bottom-2 w-full" viewBox="0 0 200 12" fill="none" preserveAspectRatio="none">
+                <path d="M2 9c40-6 120-8 196-3" stroke="#FFD32C" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+              </svg>
             </span>
           </h1>
-          <p className="text-base text-gray-400 mt-5 leading-relaxed">
+          <p className="text-base text-white/70 mt-6 leading-relaxed">
             Manage societies, partners and subscriptions from a single powerful dashboard.
           </p>
 
           {/* Feature cards */}
           <div className="grid grid-cols-3 gap-3 mt-10">
             {[
-              { emoji: '🏢', label: 'Multi-society', sub: 'Unified control' },
-              { emoji: '👥', label: 'Partner Network', sub: 'Grow your reach' },
-              { emoji: '📊', label: 'Analytics', sub: 'Real-time insight' },
+              { emoji: '🏡', label: 'Multi-society', sub: 'Unified control' },
+              { emoji: '🤝', label: 'Partner Network', sub: 'Grow your reach' },
+              { emoji: '📈', label: 'Analytics', sub: 'Real-time insight' },
             ].map((f, i) => (
               <div
                 key={f.label}
-                className="rounded-2xl p-4 bg-white/[0.04] ring-1 ring-inset ring-white/10 backdrop-blur-sm"
+                className="rounded-2xl p-4 bg-white/10 ring-1 ring-inset ring-white/15 backdrop-blur-sm hover:bg-white/15 transition-colors"
                 style={{ animation: `float 6s ease-in-out ${i * 0.8}s infinite` }}
               >
-                <span className="text-xl">{f.emoji}</span>
-                <p className="text-white text-sm font-medium mt-3">{f.label}</p>
-                <p className="text-gray-500 text-xs mt-0.5">{f.sub}</p>
+                <span className="text-2xl">{f.emoji}</span>
+                <p className="text-white text-sm font-semibold mt-3">{f.label}</p>
+                <p className="text-white/55 text-xs mt-0.5">{f.sub}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="relative z-10 text-gray-600 text-xs">© 2026 Nivasi Technologies</p>
+        <p className="relative z-10 text-white/40 text-xs">© 2026 MySwarg · Made with 💛 in India</p>
       </div>
 
       {/* Right panel */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 sm:px-10 py-12 bg-gradient-to-b from-white to-gray-50/60">
-        {/* Mobile logo */}
-        <div className="flex lg:hidden items-center gap-3 mb-10">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-400 via-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/30">
-            <span className="text-white text-lg font-bold">N</span>
-          </div>
-          <span className="text-xl font-semibold tracking-tight text-gray-900">Nivasi</span>
-        </div>
+      <div className="relative flex-1 flex flex-col items-center justify-center px-6 sm:px-10 py-12 bg-gradient-to-b from-mint-50 via-white to-white overflow-hidden">
+        <div className="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-sun-300/20 blur-3xl" />
 
-        <div className="w-full max-w-sm animate-fade-up">
+        {/* Wordmark */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/logo.png" alt="MySwarg" className="relative w-40 mb-10 drop-shadow-sm" />
+
+        <div className="relative w-full max-w-sm animate-fade-up">
           <h2 className="text-[28px] font-semibold tracking-tight text-gray-900 mb-1.5">
-            {showOtp ? 'Check your phone' : 'Welcome back'}
+            {showOtp ? 'Check your phone 📱' : 'Welcome back 👋'}
           </h2>
           <p className="text-sm text-gray-500 mb-8">
             {showOtp ? 'Enter the 6-digit code we just sent you' : 'Sign in to your admin account'}
@@ -272,11 +289,11 @@ export default function LoginPage() {
           )}
 
           <p className="mt-8 text-center text-xs text-gray-400">
-            Protected by one-time password verification
+            🔒 Protected by one-time password verification
           </p>
         </div>
 
-        <p className="mt-auto pt-12 text-xs text-gray-300">Nivasi Command Centre v1.0</p>
+        <p className="relative mt-auto pt-12 text-xs text-gray-400">MySwarg Command Centre v1.0</p>
       </div>
     </div>
   );

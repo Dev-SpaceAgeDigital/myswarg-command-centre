@@ -10,8 +10,8 @@ interface EmptyStateProps {
 
 export const EmptyState = ({ icon: Icon, title, description, action, actionLabel }: EmptyStateProps) => (
   <div className="flex flex-col items-center justify-center py-16 text-center">
-    <div className="w-16 h-16 bg-gradient-to-b from-gray-50 to-gray-100 ring-1 ring-inset ring-gray-200/70 rounded-2xl flex items-center justify-center mb-5 shadow-sm">
-      <Icon size={26} className="text-gray-400" />
+    <div className="w-16 h-16 bg-gradient-to-br from-mint-50 to-sun-50 ring-1 ring-inset ring-blue-100 rounded-2xl flex items-center justify-center mb-5 shadow-sm">
+      <Icon size={26} className="text-blue-500" />
     </div>
     <h3 className="text-base font-semibold text-gray-900 mb-1.5">{title}</h3>
     <p className="text-sm text-gray-500 max-w-xs mb-6 leading-relaxed">{description}</p>

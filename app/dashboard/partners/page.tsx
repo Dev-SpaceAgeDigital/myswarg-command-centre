@@ -172,7 +172,7 @@ function AddPartnerModal({
               <label className="text-sm font-medium text-gray-700 block mb-1">Parent Partner</label>
               <select value={form.parentId} onChange={set('parentId')}
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 bg-white">
-                <option value="">No parent (reports to Nivasi HQ)</option>
+                <option value="">No parent (reports to MySwarg HQ)</option>
                 {filteredParents.map(p => (
                   <option key={p.id} value={p.id}>{p.name} ({p.regionType}: {p.region})</option>
                 ))}
@@ -238,7 +238,7 @@ function CompactNode({
         )}
         <div
           className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: isSelected ? '#1565C0' : '#F3F4F6' }}
+          style={{ backgroundColor: isSelected ? '#095A51' : '#EEF4F2' }}
         >
           <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-gray-600'}`}>
             {node.name?.charAt(0)}
@@ -310,7 +310,7 @@ function PartnerDetailPanel({
             { label: 'Region', value: partner.region },
             { label: 'Region Type', value: partner.regionType },
             { label: 'Commission', value: `${partner.commissionPct}%` },
-            { label: 'Parent', value: partner.parent?.name ?? 'Nivasi HQ' },
+            { label: 'Parent', value: partner.parent?.name ?? 'MySwarg HQ' },
             { label: 'Societies', value: societyCount },
             { label: 'Sub-Partners', value: partner._count?.children ?? 0 },
             { label: 'Joined', value: new Date(partner.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) },
@@ -522,14 +522,13 @@ export default function PartnersPage() {
             </div>
           </div>
 
-          {/* Nivasi HQ Root */}
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+          {/* MySwarg HQ Root */}
+          <div className="px-4 py-3 bg-mint-50 border-b border-gray-100">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-gray-950 rounded-lg flex items-center justify-center">
-                <span className="text-white text-xs font-bold">N</span>
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/mark.png" alt="MySwarg" className="w-7 h-7 object-contain" />
               <div>
-                <p className="text-xs font-bold text-gray-900">Nivasi HQ</p>
+                <p className="text-xs font-bold text-gray-900">MySwarg HQ</p>
                 <p className="text-xs text-gray-400">Super Admin</p>
               </div>
             </div>

@@ -68,17 +68,17 @@ function NavLink({
         collapsed ? 'justify-center' : ''
       } ${
         isActive
-          ? 'bg-gradient-to-r from-blue-600/90 to-blue-500/70 text-white shadow-lg shadow-blue-900/40 ring-1 ring-inset ring-white/10'
-          : 'text-gray-400 hover:text-white hover:bg-white/[0.06]'
+          ? 'bg-sun-400 text-blue-900 font-semibold shadow-lg shadow-sun-500/25'
+          : 'text-white/70 hover:text-white hover:bg-white/10'
       }`}
     >
       {isActive && !collapsed && (
-        <span className="absolute -left-3 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-blue-400" />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] animate-heartbeat">💛</span>
       )}
       <item.icon
         size={18}
         strokeWidth={isActive ? 2.2 : 1.8}
-        className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-200'}`}
+        className={`flex-shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-blue-800' : 'text-white/55 group-hover:text-sun-300'}`}
       />
       {!collapsed && <span className="truncate">{item.label}</span>}
     </Link>
@@ -235,10 +235,10 @@ function ProfileDropdown({
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((x) => !x)}
-        className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center ring-2 ring-white shadow-md hover:ring-blue-200 transition-all"
+        className="w-9 h-9 bg-gradient-to-br from-sun-300 to-sun-500 rounded-full flex items-center justify-center ring-2 ring-white shadow-md hover:ring-sun-200 hover:scale-105 transition-all"
         title={user?.name ?? 'Admin'}
       >
-        <span className="text-white text-xs font-bold">{user?.name?.charAt(0)?.toUpperCase() ?? 'A'}</span>
+        <span className="text-blue-900 text-sm font-bold">{user?.name?.charAt(0)?.toUpperCase() ?? 'A'}</span>
       </button>
 
       {open && (
@@ -432,24 +432,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center animate-fade-in">
-          <div className="relative w-14 h-14 mx-auto mb-5">
-            <div className="absolute inset-0 rounded-2xl bg-blue-500/20 animate-ping" />
-            <div className="relative w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/30">
-              <span className="text-white font-bold text-xl">N</span>
-            </div>
+          <div className="relative w-16 h-16 mx-auto mb-5">
+            <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/mark.png" alt="MySwarg" className="relative w-16 h-16 object-contain animate-float" />
           </div>
-          <p className="text-sm font-medium text-gray-500">Loading Nivasi Command Centre…</p>
+          <p className="text-sm font-medium text-gray-500">Getting your MySwarg home ready… 🏡</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-canvas">
       {/* Mobile backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-gray-950/50 backdrop-blur-sm z-30 lg:hidden animate-fade-in"
+          className="fixed inset-0 bg-blue-950/40 backdrop-blur-sm z-30 lg:hidden animate-fade-in"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -459,23 +458,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Sidebar */}
       <aside
-        className={`no-print fixed left-0 top-0 h-screen bg-gray-950 flex flex-col z-40 lg:z-20 transition-all duration-300 overflow-hidden ${sidebarW} ${
+        className={`no-print fixed left-0 top-0 h-screen bg-hero flex flex-col z-40 lg:z-20 transition-all duration-300 overflow-hidden ${sidebarW} ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         {/* Ambient glow */}
-        <div className="pointer-events-none absolute -top-24 -left-20 w-64 h-64 rounded-full bg-blue-600/20 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 -right-24 w-56 h-56 rounded-full bg-indigo-600/10 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 bg-grid opacity-60 [mask-image:linear-gradient(to_bottom,black,transparent_40%)]" />
+        <div className="pointer-events-none absolute -bottom-24 -left-16 w-64 h-64 rounded-full bg-sun-400/10 blur-3xl" />
 
         {/* Logo */}
-        <div className={`relative h-16 flex items-center border-b border-white/[0.06] ${collapsed ? 'justify-center px-0' : 'px-5'}`}>
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-400 via-blue-600 to-indigo-700 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-600/40 ring-1 ring-white/20">
-            <span className="text-white font-bold text-[15px]">N</span>
+        <div className={`relative h-[72px] flex items-center border-b border-white/10 ${collapsed ? 'justify-center px-0' : 'px-5'}`}>
+          <div className="group w-10 h-10 bg-mint-50 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-black/20 ring-2 ring-white/30">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/mark.png" alt="MySwarg" className="w-8 h-8 object-contain group-hover:animate-wiggle" />
           </div>
           {!collapsed && (
             <div className="ml-3 leading-tight">
-              <p className="text-white font-semibold text-[15px] tracking-tight">Nivasi</p>
-              <p className="text-blue-300/80 text-[11px] font-medium uppercase tracking-[0.12em]">Command Centre</p>
+              <p className="font-display text-white font-semibold text-[17px] tracking-tight">MySwarg</p>
+              <p className="text-sun-300 text-[10.5px] font-semibold uppercase tracking-[0.14em]">Command Centre</p>
             </div>
           )}
         </div>
@@ -483,7 +483,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Main nav */}
         <nav className="relative flex-1 px-3 py-5 space-y-1 overflow-y-auto">
           {!collapsed && (
-            <p className="px-3 pb-2 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-gray-600">Menu</p>
+            <p className="px-3 pb-2 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white/40">Menu</p>
           )}
           {mainNavItems.map((item) => (
             <NavLink key={item.href} item={item} pathname={pathname} collapsed={collapsed} />
@@ -492,7 +492,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Divider + Settings */}
         <div className="relative px-3 pb-3">
-          <div className="border-t border-white/[0.06] mb-3" />
+          <div className="border-t border-white/10 mb-3" />
           {bottomNavItems.map((item) => (
             <NavLink key={item.href} item={item} pathname={pathname} collapsed={collapsed} />
           ))}
@@ -502,20 +502,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {!collapsed && (
           <div className="relative px-3 pb-3">
             <div
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.04] ring-1 ring-inset ring-white/[0.06] hover:bg-white/[0.08] cursor-pointer"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-white/[0.08] ring-1 ring-inset ring-white/10 hover:bg-white/[0.14] cursor-pointer"
               onClick={() => router.push('/dashboard/settings?tab=account')}
             >
-              <div className="relative w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-xs font-bold">{user?.name?.charAt(0)?.toUpperCase() ?? 'A'}</span>
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-gray-950" />
+              <div className="relative w-9 h-9 bg-gradient-to-br from-sun-300 to-sun-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md shadow-black/10">
+                <span className="text-blue-900 text-sm font-bold">{user?.name?.charAt(0)?.toUpperCase() ?? 'A'}</span>
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-blue-700" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white text-[13px] font-medium truncate">{user?.name ?? 'Admin'}</p>
-                <p className="text-gray-500 text-[11px]">{user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Wing Admin'}</p>
+                <p className="text-white/55 text-[11px]">{user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Wing Admin'}</p>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); handleLogout(); }}
-                className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                className="p-1.5 rounded-lg text-white/50 hover:text-red-300 hover:bg-red-500/15 transition-colors"
                 title="Logout"
               >
                 <LogOut size={15} />
@@ -528,18 +528,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className={`relative px-3 pb-3 ${collapsed ? 'flex flex-col items-center' : ''}`}>
           <button
             onClick={toggleCollapsed}
-            className="hidden lg:flex w-full items-center justify-center gap-2 p-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/[0.06] transition-colors text-xs font-medium"
+            className="hidden lg:flex w-full items-center justify-center gap-2 p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors text-xs font-medium"
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /><span>Collapse</span></>}
           </button>
-          {!collapsed && <p className="text-gray-700 text-[11px] text-center pb-1 mt-1">v1.0.0</p>}
+          {!collapsed && <p className="text-white/30 text-[11px] text-center pb-1 mt-1">Made with 💛 · v1.0.0</p>}
         </div>
       </aside>
 
       {/* Header */}
       <header
-        className={`no-print fixed top-0 right-0 left-0 h-16 flex items-center justify-between px-4 sm:px-6 z-10 transition-all duration-300 bg-white/75 backdrop-blur-xl backdrop-saturate-150 border-b ${
+        className={`no-print fixed top-0 right-0 left-0 h-16 flex items-center justify-between px-4 sm:px-6 z-10 transition-all duration-300 bg-white/70 backdrop-blur-xl backdrop-saturate-150 border-b ${
           scrolled ? 'border-gray-200/80 shadow-sm' : 'border-transparent'
         } ${collapsed ? 'lg:left-16' : 'lg:left-64'}`}
       >

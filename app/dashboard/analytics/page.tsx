@@ -58,7 +58,7 @@ const MILESTONES = [
   { color: 'bg-orange-500', text: 'First premium client',    date: 'Jan 2026'   },
 ];
 
-const PLAN_COLORS = ['#60A5FA', '#1565C0', '#0D47A1', '#7C3AED'];
+const PLAN_COLORS = ['#69CDB9', '#138A79', '#095A51', '#FFD32C'];
 
 // ─── Tooltip Styles ───────────────────────────────────────────────────────────
 
@@ -292,15 +292,15 @@ export default function AnalyticsPage() {
               <ComposedChart data={revenueSlice}>
                 <defs>
                   <linearGradient id="mrrGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#1565C0" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#1565C0" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="#095A51" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#095A51" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E6EFEC" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#8EA19C' }} axisLine={false} tickLine={false} />
                 <YAxis
                   yAxisId="left"
-                  tick={{ fontSize: 11, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 11, fill: '#8EA19C' }}
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`}
@@ -308,7 +308,7 @@ export default function AnalyticsPage() {
                 <YAxis
                   yAxisId="right"
                   orientation="right"
-                  tick={{ fontSize: 11, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 11, fill: '#8EA19C' }}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -324,7 +324,7 @@ export default function AnalyticsPage() {
                   type="monotone"
                   dataKey="mrr"
                   fill="url(#mrrGrad)"
-                  stroke="#1565C0"
+                  stroke="#095A51"
                   strokeWidth={2}
                   dot={false}
                 />
@@ -332,7 +332,7 @@ export default function AnalyticsPage() {
                   yAxisId="right"
                   type="monotone"
                   dataKey="societies"
-                  stroke="#7C3AED"
+                  stroke="#F2B90B"
                   strokeWidth={2}
                   dot={false}
                   strokeDasharray="4 2"
@@ -345,7 +345,7 @@ export default function AnalyticsPage() {
                 <span className="text-xs text-gray-500">MRR</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-0.5 bg-purple-600 border-dashed" style={{ borderTop: '2px dashed #7C3AED', background: 'none' }} />
+                <div className="w-8 h-0.5 bg-sun-500 border-dashed" style={{ borderTop: '2px dashed #F2B90B', background: 'none' }} />
                 <span className="text-xs text-gray-500">Societies</span>
               </div>
             </div>
@@ -358,7 +358,7 @@ export default function AnalyticsPage() {
             <ResponsiveContainer width="100%" height={160}>
               <PieChart>
                 <Pie
-                  data={planData.length > 0 ? planData : [{ name: 'No data', value: 1, color: '#E5E7EB' }]}
+                  data={planData.length > 0 ? planData : [{ name: 'No data', value: 1, color: '#E0E9E6' }]}
                   cx="50%"
                   cy="50%"
                   innerRadius={50}
@@ -366,7 +366,7 @@ export default function AnalyticsPage() {
                   paddingAngle={3}
                   dataKey="value"
                 >
-                  {(planData.length > 0 ? planData : [{ color: '#E5E7EB' }]).map((entry: any, i: number) => (
+                  {(planData.length > 0 ? planData : [{ color: '#E0E9E6' }]).map((entry: any, i: number) => (
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
@@ -400,14 +400,14 @@ export default function AnalyticsPage() {
         <ChartCard title="New Societies Added" sub="Monthly acquisition for past 6 months">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={NEW_SOCIETIES_DATA} barSize={32}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E6EFEC" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#8EA19C' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#8EA19C' }} axisLine={false} tickLine={false} />
               <Tooltip
                 {...tooltipStyle}
                 formatter={(value: any) => [value, 'Societies Added']}
               />
-              <Bar dataKey="count" fill="#1565C0" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="count" fill="#095A51" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -424,13 +424,13 @@ export default function AnalyticsPage() {
           ) : (
             <ResponsiveContainer width="100%" height={Math.max(cityChartData.length * 36 + 20, 180)}>
               <BarChart data={cityChartData} layout="vertical" barSize={18}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E6EFEC" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: '#8EA19C' }} axisLine={false} tickLine={false} />
                 <YAxis
                   type="category"
                   dataKey="city"
                   width={80}
-                  tick={{ fontSize: 11, fill: '#6B7280' }}
+                  tick={{ fontSize: 11, fill: '#62756F' }}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -456,9 +456,9 @@ export default function AnalyticsPage() {
       <ChartCard title="Subscription Health Overview" sub="Society status trends over 6 months">
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart data={HEALTH_DATA}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-            <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#E6EFEC" vertical={false} />
+            <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#8EA19C' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: '#8EA19C' }} axisLine={false} tickLine={false} />
             <Tooltip {...tooltipStyle} />
             <Legend
               wrapperStyle={{ fontSize: '12px', paddingTop: '12px' }}

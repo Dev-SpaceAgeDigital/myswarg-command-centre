@@ -183,7 +183,7 @@ function GeneralTab({ settings, setSettings, handleSave, saved }: {
   return (
     <div>
       {/* Platform config */}
-      <Card title="Platform Configuration" sub="Core settings for the Nivasi platform">
+      <Card title="Platform Configuration" sub="Core settings for the MySwarg platform">
         <div className="space-y-4">
           <Field label="Platform Name">
             <input value={settings.platformName} onChange={set('platformName')} className={inputCls} />
@@ -662,7 +662,7 @@ function AccountTab({ user }: { user: { name?: string; role?: string; phone?: st
           </Field>
           <Field label="UPI Name">
             <input value={upi.upiName} onChange={(e) => setUpi((u) => ({ ...u, upiName: e.target.value }))}
-              placeholder="Nivasi Payments" className={inputCls} />
+              placeholder="MySwarg Payments" className={inputCls} />
           </Field>
         </div>
 
@@ -674,7 +674,7 @@ function AccountTab({ user }: { user: { name?: string; role?: string; phone?: st
             <div>
               <p className="text-gray-400 text-xs">Pay to</p>
               <p className="text-white font-mono font-medium">{upi.upiId}</p>
-              <p className="text-gray-400 text-xs mt-0.5">{upi.upiName || 'Nivasi Payments'}</p>
+              <p className="text-gray-400 text-xs mt-0.5">{upi.upiName || 'MySwarg Payments'}</p>
             </div>
           </div>
         )}
@@ -688,7 +688,7 @@ function AccountTab({ user }: { user: { name?: string; role?: string; phone?: st
         <div className="space-y-3">
           <Field label="Company Name">
             <input value={company.companyName} onChange={(e) => setCompany((c) => ({ ...c, companyName: e.target.value }))}
-              placeholder="Nivasi Technologies" className={inputCls} />
+              placeholder="MySwarg Technologies" className={inputCls} />
           </Field>
           <Field label="GSTIN (optional)">
             <input value={company.gstin} onChange={(e) => setCompany((c) => ({ ...c, gstin: e.target.value }))}
