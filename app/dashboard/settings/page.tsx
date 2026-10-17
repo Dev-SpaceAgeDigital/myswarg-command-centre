@@ -719,10 +719,9 @@ function SecurityTab({ user }: { user: { name?: string; phone?: string } | null 
         <div className="bg-green-50 border border-green-100 rounded-xl p-4 flex items-start gap-3">
           <Check size={18} className="text-emerald-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-green-800">OTP Authentication Active</p>
+            <p className="text-sm font-medium text-green-800">PIN Sign-in Active</p>
             <p className="text-xs text-emerald-600 mt-0.5">
-              Your account is secured with OTP-based authentication. No password required.
-              OTP is sent to {maskedPhone}.
+              Your account is secured with a 6-digit PIN. Five wrong tries lock sign-in for 15 minutes.
             </p>
           </div>
         </div>
@@ -730,10 +729,10 @@ function SecurityTab({ user }: { user: { name?: string; phone?: string } | null 
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-700">Two-Factor Authentication</p>
-              <p className="text-xs text-gray-400 mt-0.5">OTP via SMS is your second factor</p>
+              <p className="text-xs text-gray-400 mt-0.5">Not available yet</p>
             </div>
             <span className="text-xs bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/15 px-2 py-1 rounded-full font-medium flex items-center gap-1">
-              <Check size={11} /> Enabled
+              Coming soon
             </span>
           </div>
           <div className="mt-3 text-xs text-gray-400">Phone: {maskedPhone}</div>

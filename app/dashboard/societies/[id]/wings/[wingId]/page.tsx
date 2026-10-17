@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Home, Users, UserCheck, Plus, X, Phone } from 'lucide-react';
 import api from '@/lib/api';
+import ActivationCodeModal, { CodeEntry } from '@/components/ActivationCodeModal';
 
 interface FlatUser {
   id: string;
@@ -25,6 +26,7 @@ interface Secretary {
   name: string;
   phone: string;
   isPrimary: boolean;
+  pin?: { status: 'ACTIVE' | 'CODE_PENDING' | 'CODE_EXPIRED' | 'NOT_ACTIVATED' };
 }
 
 interface WingData {
@@ -40,7 +42,7 @@ interface WingData {
 
 function SetSecretaryModal({
   wingId, replaceUser, onClose, onSuccess,
-}: { wingId: string; replaceUser?: Secretary; onClose: () => void; onSuccess: () => void }) {
+}: { wingId: string; replaceUser?: Secretary; onClose: () => void; onSuccess: (codes: CodeEntry[]) => void }) {
   const [form, setForm] = useState({ name: '', phone: '' });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -51,8 +53,9 @@ function SetSecretaryModal({
     try {
       const payload: Record<string, string> = { name: form.name, phone: form.phone };
       if (replaceUser) payload.replaceUserId = replaceUser.id;
-      await api.post(`/superadmin/wings/${wingId}/secretary`, payload);
-      onSuccess();
+      const res = await api.post(`/superadmin/wings/${wingId}/secretary`, payload);
+      const activation = res.data?.data?.activation ?? null;
+      onSuccess([{ name: form.name, phone: form.phone, activation }]);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to set secretary');
     } finally {
@@ -124,6 +127,19 @@ export default function WingDetailPage() {
   const [wing, setWing] = useState<WingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSecretary, setShowSecretary] = useState(false);
+  const [issued, setIssued] = useState<CodeEntry[] | null>(null);
+
+  const resetPin = async (sec: Secretary) => {
+    if (!confirm(`Reset PIN for ${sec.name}? They will be signed out everywhere and need the new activation code.`)) return;
+    try {
+      const res = await api.post(`/superadmin/users/${sec.id}/reset-pin`);
+      const d = res.data.data;
+      setIssued([{ name: d.name, phone: d.phone, activation: d.activation }]);
+      fetchWing();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Could not reset the PIN');
+    }
+  };
   const [replaceTarget, setReplaceTarget] = useState<Secretary | undefined>(undefined);
 
   const fetchWing = useCallback(async () => {
@@ -222,7 +238,17 @@ export default function WingDetailPage() {
                         <span className="text-xs bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/15 font-medium px-1.5 py-0.5 rounded-full">Primary</span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-400">{sec.phone}</p>
+                    <p className="text-xs text-gray-400">
+                      {sec.phone}
+                      {sec.pin && (
+                        <span className={sec.pin.status === 'ACTIVE' ? 'text-emerald-600' : 'text-orange-500'}>
+                          {' · '}
+                          {sec.pin.status === 'ACTIVE' ? 'PIN set'
+                            : sec.pin.status === 'CODE_PENDING' ? 'Waiting for activation'
+                            : sec.pin.status === 'CODE_EXPIRED' ? 'Code expired' : 'Not activated'}
+                        </span>
+                      )}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -234,6 +260,12 @@ export default function WingDetailPage() {
                   >
                     <Phone size={14} className="text-emerald-600" />
                   </a>
+                  <button
+                    onClick={() => resetPin(sec)}
+                    className="text-xs text-gray-400 hover:text-blue-600 font-medium px-3 py-1.5 border border-gray-200 rounded-lg hover:border-blue-200 transition-colors"
+                  >
+                    Reset PIN
+                  </button>
                   <button
                     onClick={() => { setReplaceTarget(sec); setShowSecretary(true); }}
                     className="text-xs text-gray-400 hover:text-orange-500 font-medium px-3 py-1.5 border border-gray-200 rounded-lg hover:border-orange-200 transition-colors"
@@ -298,12 +330,14 @@ export default function WingDetailPage() {
         )}
       </div>
 
+      {issued && <ActivationCodeModal title="Share activation code" entries={issued} onClose={() => setIssued(null)} />}
+
       {showSecretary && (
         <SetSecretaryModal
           wingId={wingId}
           replaceUser={replaceTarget}
           onClose={() => { setShowSecretary(false); setReplaceTarget(undefined); }}
-          onSuccess={() => { fetchWing(); setShowSecretary(false); setReplaceTarget(undefined); }}
+          onSuccess={(c) => { fetchWing(); setShowSecretary(false); setReplaceTarget(undefined); setIssued(c); }}
         />
       )}
     </div>

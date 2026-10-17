@@ -35,7 +35,9 @@ api.interceptors.response.use(
       return api(config);
     }
 
-    if (error.response?.status === 401) {
+    // A wrong PIN is also a 401. Only an expired session should bounce to /login.
+    const isAuthCall = String(config?.url ?? '').includes('/auth/');
+    if (error.response?.status === 401 && !isAuthCall) {
       localStorage.removeItem('nivasi_admin_token');
       localStorage.removeItem('nivasi_admin_user');
       window.location.href = '/login';

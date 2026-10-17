@@ -11,11 +11,14 @@ interface User {
   region?: string;
 }
 
+export type PhoneState = 'PIN' | 'ACTIVATE' | 'NEEDS_CODE';
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  sendOtp: (phone: string) => Promise<void>;
-  verifyOtp: (phone: string, otp: string) => Promise<void>;
+  checkPhone: (phone: string) => Promise<PhoneState>;
+  loginWithPin: (phone: string, pin: string) => Promise<void>;
+  activate: (phone: string, code: string, pin: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -34,23 +37,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const sendOtp = async (phone: string) => {
-    const cleanPhone = phone.trim().replace(/[^0-9]/g, '');
-    await api.post('/auth/send-otp', { phone: cleanPhone });
+  const clean = (phone: string) => phone.trim().replace(/[^0-9]/g, '');
+
+  const deviceId = () => {
+    let id = localStorage.getItem('nivasi_device_id');
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem('nivasi_device_id', id);
+    }
+    return id;
   };
 
-  const verifyOtp = async (phone: string, otp: string) => {
-    const cleanPhone = phone.trim().replace(/[^0-9]/g, '');
-
-    let device_id = localStorage.getItem('nivasi_device_id');
-    if (!device_id) {
-      device_id = crypto.randomUUID();
-      localStorage.setItem('nivasi_device_id', device_id);
-    }
-
-    const res = await api.post('/auth/verify-otp', { phone: cleanPhone, otp, device_id });
-
-    const { token, user: userData } = res.data.data;
+  const finishLogin = (data: { token: string; user: User }) => {
+    const { token, user: userData } = data;
     if (!['SUPER_ADMIN', 'WING_ADMIN'].includes(userData.role)) {
       throw new Error('Access denied. Admin credentials required.');
     }
@@ -60,6 +59,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData);
   };
 
+  const checkPhone = async (phone: string): Promise<PhoneState> => {
+    const res = await api.post('/auth/check-phone', { phone: clean(phone) });
+    return res.data.data.status;
+  };
+
+  const loginWithPin = async (phone: string, pin: string) => {
+    const res = await api.post('/auth/login-pin', { phone: clean(phone), pin, device_id: deviceId() });
+    finishLogin(res.data.data);
+  };
+
+  const activate = async (phone: string, code: string, pin: string) => {
+    const res = await api.post('/auth/activate', { phone: clean(phone), code: code.replace(/\s+/g, ''), pin, device_id: deviceId() });
+    finishLogin(res.data.data);
+  };
+
   const logout = () => {
     localStorage.removeItem('nivasi_admin_token');
     localStorage.removeItem('nivasi_admin_user');
@@ -67,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, sendOtp, verifyOtp, logout }}>
+    <AuthContext.Provider value={{ user, loading, checkPhone, loginWithPin, activate, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Building2, Plus, Search, ChevronRight, MoreVertical, Eye, Trash2, X, CheckCircle, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import ActivationCodeModal, { ActivationInfo } from '@/components/ActivationCodeModal';
 
 const MapPicker = dynamic(() => import('@/components/ui/MapPicker'), { ssr: false });
 
@@ -47,6 +48,9 @@ function AddSocietyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
   const [step, setStep] = useState<WizardStep>('society');
   const [createdSociety, setCreatedSociety] = useState<CreatedSociety | null>(null);
   const [createdWing, setCreatedWing] = useState<CreatedWing | null>(null);
+  const [secretaryCode, setSecretaryCode] = useState<ActivationInfo | null>(null);
+  const [secretaryProblem, setSecretaryProblem] = useState('');
+  const [showCode, setShowCode] = useState(false);
 
   // Step 1 state
   const [form, setForm] = useState({ name: '', address: '', city: '', state: 'Gujarat', pinCode: '' });
@@ -106,6 +110,9 @@ function AddSocietyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
         flatsCreated: res.data.data.flatsCreated ?? totalFlats,
         secretaryName: wingForm.secretaryName || undefined,
       });
+      setSecretaryCode(res.data.data.secretaryActivation ?? null);
+      setSecretaryProblem(res.data.data.secretaryError ?? '');
+      setShowCode(!!res.data.data.secretaryActivation);
       setStep('success');
       onSuccess(createdSociety.id);
     } catch (err: any) {
@@ -291,6 +298,23 @@ function AddSocietyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
               </div>
               <h3 className="text-xl font-semibold tracking-tight text-gray-900 mb-1">{createdSociety.name} is ready!</h3>
               <p className="text-sm text-gray-400 mb-6">Your new society has been set up</p>
+              {showCode && secretaryCode && createdWing && (
+                <ActivationCodeModal
+                  title="Share with the Secretary"
+                  entries={[{ name: createdWing.secretaryName ?? 'Secretary', phone: wingForm.secretaryPhone, activation: secretaryCode }]}
+                  onClose={() => setShowCode(false)}
+                />
+              )}
+              {secretaryProblem && (
+                <div className="mb-4 p-3 rounded-xl bg-orange-50 text-sm text-orange-700 text-left">
+                  The wing was created, but the Secretary could not be added: {secretaryProblem}
+                </div>
+              )}
+              {secretaryCode && !showCode && (
+                <button onClick={() => setShowCode(true)} className="mb-4 text-xs font-semibold text-blue-600 hover:text-blue-700">
+                  Show the Secretary's activation code again
+                </button>
+              )}
               <div className="bg-gray-50 rounded-2xl p-4 text-left space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Society</span>

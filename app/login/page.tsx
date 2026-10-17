@@ -15,14 +15,41 @@ function isColdStartError(err: unknown): boolean {
   );
 }
 
+type Step = 'phone' | 'pin' | 'code' | 'newpin';
+
+const weakPin = (pin: string): string | null => {
+  if (/^(\d)\1+$/.test(pin)) return 'Choose a PIN that is not all the same digit.';
+  const d = pin.split('').map(Number);
+  const up = d.every((v, i) => i === 0 || v === d[i - 1] + 1);
+  const down = d.every((v, i) => i === 0 || v === d[i - 1] - 1);
+  if (up || down) return 'Choose a PIN that is not a simple sequence like 123456.';
+  return null;
+};
+
+function PrimaryButton({ onClick, loading, label, loadingLabel }: { onClick: () => void; loading: boolean; label: string; loadingLabel: string }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={loading}
+      className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+    >
+      {loading && <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
+      {loading ? loadingLabel : label}
+    </button>
+  );
+}
+
 export default function LoginPage() {
+  const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
-  const [showOtp, setShowOtp] = useState(false);
-  const [otpValue, setOtpValue] = useState('');
+  const [pin, setPin] = useState('');
+  const [code, setCode] = useState('');
+  const [newPin, setNewPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [connectingMsg, setConnectingMsg] = useState(false);
   const [error, setError] = useState('');
-  const { sendOtp, verifyOtp, user } = useAuth();
+  const { checkPhone, loginWithPin, activate, user } = useAuth();
   const router = useRouter();
   const connectingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -42,63 +69,101 @@ export default function LoginPage() {
     };
   }, [loading]);
 
-  const handleSendOtp = async () => {
+  const fail = (err: unknown, fallback: string) => {
+    if (isColdStartError(err)) {
+      setError('Server is starting up, please wait...');
+      return;
+    }
+    const e = err as { response?: { data?: { message?: string } }; message?: string };
+    setError(e.response?.data?.message || e.message || fallback);
+  };
+
+  const goHome = () => setTimeout(() => window.location.replace('/dashboard'), 300);
+
+  const handleContinue = async () => {
     setError('');
-    const cleanPhone = phone.trim().replace(/\s/g, '');
-    if (!cleanPhone || cleanPhone.length < 10) {
-      setError('Enter a valid 10-digit phone number.');
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      setError('Enter a valid 10-digit mobile number.');
       return;
     }
     setLoading(true);
     try {
-      await sendOtp(cleanPhone);
-      setPhone(cleanPhone);
-      setShowOtp(true);
-      toast.success('OTP sent successfully');
+      const status = await checkPhone(phone);
+      setPin(''); setCode(''); setNewPin(''); setConfirmPin('');
+      setStep(status === 'ACTIVATE' ? 'code' : 'pin');
+      if (status === 'NEEDS_CODE') {
+        setError('This account has no PIN yet. Ask the platform owner for an activation code.');
+        setStep('code');
+      }
+    } catch (err) {
+      fail(err, 'Could not check this number. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePinLogin = async () => {
+    setError('');
+    if (pin.length !== 6) { setError('Your PIN has 6 digits.'); return; }
+    setLoading(true);
+    try {
+      await loginWithPin(phone, pin);
+      goHome();
     } catch (err: unknown) {
-      if (isColdStartError(err)) {
-        setError('Server is starting up, please wait...');
+      const e = err as { response?: { status?: number; data?: { code?: string } } };
+      if (e.response?.status === 409 && e.response?.data?.code === 'NEEDS_ACTIVATION') {
+        setStep('code');
+        setError('');
       } else {
-        setError('Failed to send OTP. Check the phone number and try again.');
+        setPin('');
+        fail(err, 'Incorrect phone number or PIN.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerify = async () => {
+  const handleCodeNext = () => {
+    setError('');
+    if (code.length !== 8) { setError('The activation code has 8 digits.'); return; }
+    setStep('newpin');
+  };
+
+  const handleActivate = async () => {
+    setError('');
+    if (newPin.length !== 6) { setError('Your PIN must have 6 digits.'); return; }
+    const weak = weakPin(newPin);
+    if (weak) { setError(weak); return; }
+    if (newPin !== confirmPin) { setError('The two PINs do not match.'); return; }
+    setLoading(true);
     try {
-      setLoading(true);
-      setError('');
-
-      if (otpValue.length !== 6) {
-        setError('Please enter the 6-digit OTP');
-        return;
-      }
-
-      const cleanPhone = phone.trim().replace(/\s/g, '');
-      await verifyOtp(cleanPhone, otpValue);
-
-      setTimeout(() => {
-        window.location.replace('/dashboard');
-      }, 300);
+      await activate(phone, code, newPin);
+      goHome();
     } catch (err: unknown) {
-      console.error('Verify error:', err);
-      if (isColdStartError(err)) {
-        setError('Server is starting up, please wait...');
-      } else {
-        const e = err as { response?: { data?: { message?: string } }; message?: string };
-        setError(e.response?.data?.message || e.message || 'Invalid OTP');
-      }
+      const e = err as { response?: { status?: number } };
+      // A bad code sends them back to re-enter it; a bad PIN stays on this step.
+      const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message ?? '';
+      if (e.response?.status === 400 && /code/i.test(msg)) { setCode(''); setStep('code'); }
+      fail(err, 'Could not activate this account.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleChangeNumber = () => {
-    setShowOtp(false);
-    setOtpValue('');
+    setStep('phone');
+    setPin(''); setCode(''); setNewPin(''); setConfirmPin('');
     setError('');
+  };
+
+  const digits = (setter: (v: string) => void, max: number) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setter(e.target.value.replace(/\D/g, '').slice(0, max));
+
+  const headings: Record<Step, [string, string]> = {
+    phone: ['Welcome back 👋', 'Sign in to your admin account'],
+    pin: ['Enter your PIN 🔐', 'Use the 6-digit PIN you chose'],
+    code: ['Activate your account ✨', 'Enter the 8-digit code you were given'],
+    newpin: ['Choose your PIN 🔑', 'You will use it every time you sign in'],
   };
 
   return (
@@ -187,12 +252,8 @@ export default function LoginPage() {
         <img src="/brand/logo.png" alt="MySwarg" className="relative w-40 mb-10 drop-shadow-sm" />
 
         <div className="relative w-full max-w-sm animate-fade-up">
-          <h2 className="text-[28px] font-semibold tracking-tight text-gray-900 mb-1.5">
-            {showOtp ? 'Check your phone 📱' : 'Welcome back 👋'}
-          </h2>
-          <p className="text-sm text-gray-500 mb-8">
-            {showOtp ? 'Enter the 6-digit code we just sent you' : 'Sign in to your admin account'}
-          </p>
+          <h2 className="text-[28px] font-semibold tracking-tight text-gray-900 mb-1.5">{headings[step][0]}</h2>
+          <p className="text-sm text-gray-500 mb-8">{headings[step][1]}</p>
 
           {connectingMsg && (
             <div className="mb-5 p-3.5 rounded-xl bg-blue-50 ring-1 ring-inset ring-blue-100 flex items-start gap-3">
@@ -203,13 +264,19 @@ export default function LoginPage() {
             </div>
           )}
 
-          {!showOtp ? (
+          {step !== 'phone' && (
+            <div className="flex items-center justify-between mb-5 p-3 rounded-xl bg-gray-50 ring-1 ring-inset ring-gray-200/70">
+              <p className="text-sm font-semibold text-gray-900">+91 {phone}</p>
+              <button onClick={handleChangeNumber} className="text-xs font-semibold text-blue-600 hover:text-blue-700">
+                Change Number
+              </button>
+            </div>
+          )}
+
+          {step === 'phone' && (
             <>
-              {/* Step 1: Phone input */}
               <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
                 <div className="flex items-center bg-white border border-gray-200 rounded-xl h-12 overflow-hidden shadow-xs hover:border-gray-300 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
                   <span className="pl-4 pr-3 text-gray-600 text-sm font-medium border-r border-gray-200 h-full flex items-center gap-1.5 bg-gray-50">
                     🇮🇳 +91
@@ -218,67 +285,104 @@ export default function LoginPage() {
                     type="tel"
                     placeholder="10-digit mobile number"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()}
+                    onChange={digits(setPhone, 10)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleContinue()}
                     className="flex-1 h-full px-4 text-sm tracking-wide outline-none bg-transparent"
-                  />
-                </div>
-              </div>
-
-              <button
-                onClick={handleSendOtp}
-                disabled={loading}
-                className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {loading && <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
-                {loading ? 'Sending OTP...' : 'Send OTP'}
-              </button>
-            </>
-          ) : (
-            <>
-              {/* Step 2: OTP input */}
-              <div className="flex items-center justify-between mb-5 p-3 rounded-xl bg-gray-50 ring-1 ring-inset ring-gray-200/70">
-                <p className="text-sm text-gray-600">
-                  Sent to{' '}
-                  <span className="font-semibold text-gray-900">
-                    +91 {phone}
-                  </span>
-                </p>
-                <button
-                  onClick={handleChangeNumber}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-700"
-                >
-                  Change Number
-                </button>
-              </div>
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Enter OTP</label>
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    value={otpValue}
-                    onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
-                    className="w-full h-14 text-center text-2xl font-semibold tracking-[0.5em] bg-white border border-gray-200 rounded-xl focus:outline-none"
-                    placeholder="• • • • • •"
                     autoFocus
                   />
-                  {process.env.NODE_ENV === 'development' && (
-                    <p className="text-xs text-gray-400 text-center">Dev OTP: 123456</p>
-                  )}
                 </div>
               </div>
+              <PrimaryButton onClick={handleContinue} loading={loading} label="Continue" loadingLabel="Checking..." />
+            </>
+          )}
 
+          {step === 'pin' && (
+            <>
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 mb-2">PIN</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="current-password"
+                  maxLength={6}
+                  value={pin}
+                  onChange={digits(setPin, 6)}
+                  onKeyDown={(e) => e.key === 'Enter' && handlePinLogin()}
+                  className="w-full h-14 text-center text-2xl font-semibold tracking-[0.5em] bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500"
+                  placeholder="••••••"
+                  autoFocus
+                />
+              </div>
+              <PrimaryButton onClick={handlePinLogin} loading={loading} label="Sign in" loadingLabel="Signing in..." />
               <button
-                onClick={handleVerify}
-                disabled={loading}
-                className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                onClick={() => { setError(''); setStep('code'); }}
+                className="mt-4 w-full text-center text-xs font-semibold text-blue-600 hover:text-blue-700"
               >
-                {loading && <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
-                {loading ? 'Verifying...' : 'Verify & Login'}
+                I have an activation code
               </button>
+              <p className="mt-2 text-center text-xs text-gray-400">
+                Forgot your PIN? Ask the platform owner for a new activation code.
+              </p>
+            </>
+          )}
+
+          {step === 'code' && (
+            <>
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Activation code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={8}
+                  value={code}
+                  onChange={digits(setCode, 8)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCodeNext()}
+                  className="w-full h-14 text-center text-2xl font-semibold tracking-[0.4em] bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500"
+                  placeholder="• • • •  • • • •"
+                  autoFocus
+                />
+              </div>
+              <PrimaryButton onClick={handleCodeNext} loading={false} label="Next" loadingLabel="" />
+              <button
+                onClick={() => { setError(''); setStep('pin'); }}
+                className="mt-4 w-full text-center text-xs font-semibold text-blue-600 hover:text-blue-700"
+              >
+                I already have a PIN
+              </button>
+            </>
+          )}
+
+          {step === 'newpin' && (
+            <>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">New PIN (6 digits)</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="new-password"
+                  maxLength={6}
+                  value={newPin}
+                  onChange={digits(setNewPin, 6)}
+                  className="w-full h-14 text-center text-2xl font-semibold tracking-[0.5em] bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500"
+                  placeholder="••••••"
+                  autoFocus
+                />
+              </div>
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm PIN</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="new-password"
+                  maxLength={6}
+                  value={confirmPin}
+                  onChange={digits(setConfirmPin, 6)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleActivate()}
+                  className="w-full h-14 text-center text-2xl font-semibold tracking-[0.5em] bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500"
+                  placeholder="••••••"
+                />
+              </div>
+              <PrimaryButton onClick={handleActivate} loading={loading} label="Set PIN & sign in" loadingLabel="Activating..." />
             </>
           )}
 
@@ -289,7 +393,7 @@ export default function LoginPage() {
           )}
 
           <p className="mt-8 text-center text-xs text-gray-400">
-            🔒 Protected by one-time password verification
+            🔒 Protected by PIN sign-in and one-time activation codes
           </p>
         </div>
 
