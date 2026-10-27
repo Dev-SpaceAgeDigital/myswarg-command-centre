@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Building2, Home, Plus, X, ChevronRight,
-  CreditCard, Edit2, AlertCircle, Phone, Trash2,
+  CreditCard, Edit2, AlertCircle, Phone, Trash2, ShieldCheck, Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
@@ -11,7 +11,14 @@ import ActivationCodeModal, { CodeEntry } from '@/components/ActivationCodeModal
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface Secretary { id: string; name: string; phone: string; isPrimary: boolean; }
+interface Secretary {
+  id: string; name: string; phone: string; isPrimary: boolean;
+  pin?: { status: 'ACTIVE' | 'CODE_PENDING' | 'CODE_EXPIRED' | 'NOT_ACTIVATED' };
+}
+
+const PIN_LABEL: Record<string, string> = {
+  ACTIVE: 'PIN set', CODE_PENDING: 'Waiting for activation', CODE_EXPIRED: 'Code expired', NOT_ACTIVATED: 'Not activated',
+};
 
 interface Wing {
   id: string; name: string; flatsCount: number; residentCount: number; isActive: boolean;
@@ -25,7 +32,7 @@ interface Society {
   id: string; name: string; address: string; city: string; state: string; pinCode?: string;
   subscriptionStatus: string; planType?: string; monthlyAmount?: number;
   subscriptionStart?: string; subscriptionEnd?: string; trialEndsAt?: string;
-  notes?: string; wings: Wing[];
+  notes?: string; wings: Wing[]; code?: string | null;
 }
 
 type Tab = 'overview' | 'wings' | 'financials';
@@ -347,6 +354,8 @@ export default function SocietyDetailPage() {
 
   const [society, setSociety] = useState<Society | null>(null);
   const [wingSecretaries, setWingSecretaries] = useState<Record<string, Secretary[]>>({});
+  const [issuedCodes, setIssuedCodes] = useState<CodeEntry[] | null>(null);
+  const [resettingId, setResettingId] = useState<string | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -418,11 +427,26 @@ export default function SocietyDetailPage() {
 
   if (!society) return null;
 
+  const resetSecretaryPin = async (sec: Secretary) => {
+    if (resettingId) return;
+    if (!confirm(`Reset PIN for ${sec.name}? They will be signed out everywhere and need the new activation code.`)) return;
+    setResettingId(sec.id);
+    try {
+      const res = await api.post(`/superadmin/users/${sec.id}/reset-pin`);
+      const d = res.data.data;
+      setIssuedCodes([{ name: d.name, phone: d.phone, activation: d.activation }]);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Could not reset the PIN');
+    } finally {
+      setResettingId(null);
+    }
+  };
+
   const totalFlats = society.wings.reduce((sum, w) => sum + (w.flatsCount ?? 0), 0);
   const daysLeft = getDaysLeft(society.subscriptionEnd);
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0);
   const allSecretaries = Object.values(wingSecretaries).flat();
-  const primarySecretary = allSecretaries.find(s => s.isPrimary) || allSecretaries[0];
 
   const statusColor = society.subscriptionStatus === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/15'
     : society.subscriptionStatus === 'TRIAL' ? 'bg-orange-50 text-orange-700 ring-1 ring-inset ring-orange-600/15'
@@ -506,23 +530,40 @@ export default function SocietyDetailPage() {
                 <span className="font-medium text-gray-900">{value}</span>
               </div>
             ))}
-            {primarySecretary && (
+            {allSecretaries.length > 0 && (
               <div className="mt-2 pt-2 border-t border-gray-100">
-                <p className="text-xs text-gray-400 mb-2">Primary Secretary</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-700 text-xs font-bold">{primarySecretary.name.charAt(0)}</span>
+                <p className="text-xs text-gray-400 mb-2">Secretaries</p>
+                <div className="space-y-3">
+                  {society.wings.flatMap((w) => (wingSecretaries[w.id] || []).map((sec) => (
+                    <div key={sec.id} className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-blue-700 text-xs font-bold">{sec.name.charAt(0)}</span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{sec.name} <span className="text-xs text-gray-400 font-normal">· Wing {w.name}</span></p>
+                          <p className="text-xs text-gray-400">
+                            {sec.phone}
+                            {sec.pin && (
+                              <span className={sec.pin.status === 'ACTIVE' ? 'text-emerald-600' : 'text-orange-500'}> · {PIN_LABEL[sec.pin.status]}</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button
+                          onClick={() => resetSecretaryPin(sec)}
+                          disabled={resettingId === sec.id}
+                          className="text-xs font-medium px-2.5 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:text-blue-600 hover:border-blue-200 disabled:opacity-50"
+                        >
+                          {resettingId === sec.id ? 'Resetting…' : 'Reset PIN'}
+                        </button>
+                        <a href={`tel:${sec.phone}`} className="p-2 bg-green-50 rounded-lg hover:bg-green-100">
+                          <Phone size={14} className="text-emerald-600" />
+                        </a>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{primarySecretary.name}</p>
-                      <p className="text-xs text-gray-400">{primarySecretary.phone}</p>
-                    </div>
-                  </div>
-                  <a href={`tel:${primarySecretary.phone}`}
-                    className="p-2 bg-green-50 rounded-lg hover:bg-green-100">
-                    <Phone size={14} className="text-emerald-600" />
-                  </a>
+                  )))}
                 </div>
               </div>
             )}
@@ -530,6 +571,26 @@ export default function SocietyDetailPage() {
 
           {/* Subscription info */}
           <div className="space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-6">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <ShieldCheck size={16} className="text-blue-600" /> Guard sign-in code
+              </h3>
+              <p className="text-xs text-gray-400 mt-1 mb-3">
+                Guards enter this code, pick their wing, then their own PIN. The Secretary sets guard PINs in the app.
+              </p>
+              <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+                <span className="text-xl font-bold tracking-[0.3em] text-gray-900">{society.code ?? '—'}</span>
+                {society.code && (
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(society.code!); toast.success('Society code copied'); }}
+                    className="p-2 hover:bg-gray-200 rounded-lg" title="Copy"
+                  >
+                    <Copy size={15} className="text-gray-500" />
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-6 space-y-3">
               <h3 className="text-base font-semibold text-gray-900">Subscription</h3>
               {[
@@ -591,6 +652,7 @@ export default function SocietyDetailPage() {
                 const primary = secs.find(s => s.isPrimary) || secs[0];
                 return (
                   <div key={wing.id} className="flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+      {issuedCodes && <ActivationCodeModal title="Share with the Secretary" entries={issuedCodes} onClose={() => setIssuedCodes(null)} />}
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-blue-50 ring-1 ring-inset ring-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
                         <Home size={18} className="text-blue-600" />

@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Home, Users, UserCheck, Plus, X, Phone } from 'lucide-react';
+import { ArrowLeft, Home, Users, UserCheck, Plus, X, Phone, FileSpreadsheet } from 'lucide-react';
 import api from '@/lib/api';
 import ActivationCodeModal, { CodeEntry } from '@/components/ActivationCodeModal';
+import ImportResidentsModal from '@/components/ImportResidentsModal';
 
 interface FlatUser {
   id: string;
@@ -127,6 +128,7 @@ export default function WingDetailPage() {
   const [wing, setWing] = useState<WingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSecretary, setShowSecretary] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [issued, setIssued] = useState<CodeEntry[] | null>(null);
 
   const resetPin = async (sec: Secretary) => {
@@ -282,7 +284,15 @@ export default function WingDetailPage() {
       {/* Flats list */}
       <div className="bg-white rounded-2xl border border-gray-200/70 shadow-sm">
         <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-900">Flats ({wing.flats.length})</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-semibold text-gray-900">Flats ({wing.flats.length})</h2>
+            <button
+              onClick={() => setShowImport(true)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 px-2.5 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-50"
+            >
+              <FileSpreadsheet size={14} /> Import from Excel
+            </button>
+          </div>
           <div className="flex items-center gap-4 text-xs text-gray-400">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 bg-green-500 rounded-full" /> Occupied ({stats.occupiedFlats})
@@ -330,6 +340,9 @@ export default function WingDetailPage() {
         )}
       </div>
 
+      {showImport && (
+        <ImportResidentsModal wingId={wing.id} wingName={wing.name} onClose={() => setShowImport(false)} onDone={fetchWing} />
+      )}
       {issued && <ActivationCodeModal title="Share activation code" entries={issued} onClose={() => setIssued(null)} />}
 
       {showSecretary && (
