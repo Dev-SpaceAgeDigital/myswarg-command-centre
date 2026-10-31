@@ -1,7 +1,8 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Home, Users, UserCheck, Plus, X, Phone, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, Home, UserCheck, Plus, X, Phone, FileSpreadsheet, Search, LayoutGrid, List, DoorOpen, Users } from 'lucide-react';
+import { toast } from 'sonner';
 import api from '@/lib/api';
 import ActivationCodeModal, { CodeEntry } from '@/components/ActivationCodeModal';
 import ImportResidentsModal from '@/components/ImportResidentsModal';
@@ -117,6 +118,64 @@ function SetSecretaryModal({
   );
 }
 
+// ─── Add Unit Modal ───────────────────────────────────────────────────────────
+
+function AddUnitModal({ wingId, onClose, onSuccess }: { wingId: string; onClose: () => void; onSuccess: () => void }) {
+  const [form, setForm] = useState({ number: '', floor: '0' });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const submit = async () => {
+    const number = form.number.trim();
+    const floor = Number(form.floor);
+    if (!number) { setError('Unit number is required'); return; }
+    if (number.length > 20) { setError('Unit number can be at most 20 characters'); return; }
+    if (!Number.isInteger(floor) || floor < 0 || floor > 200) { setError('Floor must be a whole number from 0 (ground) to 200'); return; }
+    setSaving(true); setError('');
+    try {
+      await api.post(`/superadmin/wings/${wingId}/flats`, { number, floor });
+      toast.success(`Unit ${number} added`);
+      onSuccess();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Could not add the unit');
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="modal-backdrop fixed inset-0 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl ring-1 ring-gray-900/5 w-full max-w-sm p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-semibold tracking-tight text-gray-900">Add a unit</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="Close"><X size={18} className="text-gray-500" /></button>
+        </div>
+        <div className="grid grid-cols-[1fr_96px] gap-3">
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">Unit number *</label>
+            <input autoFocus value={form.number} onChange={e => setForm(f => ({ ...f, number: e.target.value }))} placeholder="e.g. A-1204 or Villa 12"
+              onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">Floor</label>
+            <input type="number" min={0} max={200} value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))}
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+        <p className="text-[11px] text-gray-400 mt-2">Use floor 0 for ground-level homes like bungalows and plots.</p>
+        {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
+        <div className="flex gap-3 mt-6">
+          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 bg-white shadow-xs rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+          <button onClick={submit} disabled={saving} className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+            {saving ? 'Adding…' : 'Add unit'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const floorLabel = (f: number) => (f === 0 ? 'Ground' : `Floor ${f}`);
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function WingDetailPage() {
@@ -129,6 +188,10 @@ export default function WingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showSecretary, setShowSecretary] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showAddUnit, setShowAddUnit] = useState(false);
+  const [query, setQuery] = useState('');
+  const [occupancy, setOccupancy] = useState<'ALL' | 'OCCUPIED' | 'VACANT'>('ALL');
+  const [unitView, setUnitView] = useState<'map' | 'list'>('map');
   const [issued, setIssued] = useState<CodeEntry[] | null>(null);
 
   const resetPin = async (sec: Secretary) => {
@@ -157,6 +220,21 @@ export default function WingDetailPage() {
 
   useEffect(() => { fetchWing(); }, [fetchWing]);
 
+  const visibleFlats = useMemo(() => {
+    if (!wing) return [];
+    const q = query.trim().toLowerCase();
+    return wing.flats
+      .filter(f => occupancy === 'ALL' || (occupancy === 'OCCUPIED') === (f.users.length > 0))
+      .filter(f => !q || f.number.toLowerCase().includes(q) || f.users.some(u => u.name.toLowerCase().includes(q) || u.phone.includes(q)))
+      .sort((a, b) => a.floor - b.floor || a.number.localeCompare(b.number, undefined, { numeric: true }));
+  }, [wing, query, occupancy]);
+
+  const floors = useMemo(() => {
+    const m = new Map<number, Flat[]>();
+    visibleFlats.forEach(f => m.set(f.floor, [...(m.get(f.floor) ?? []), f]));
+    return Array.from(m.entries()).sort((a, b) => b[0] - a[0]);
+  }, [visibleFlats]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -170,32 +248,44 @@ export default function WingDetailPage() {
   const { stats } = wing;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       {/* Header */}
       <div>
         <button
           onClick={() => router.push(`/dashboard/societies/${societyId}`)}
-          className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 mb-4 transition-colors"
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
         >
           <ArrowLeft size={16} /> {wing.society.name}
         </button>
-        <h1 className="text-2xl font-semibold tracking-tight tabular-nums text-gray-900">{wing.name}</h1>
-        <p className="text-sm text-gray-500 mt-1">{wing.society.name}</p>
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Flats', value: stats.totalFlats },
-          { label: 'Occupied',    value: stats.occupiedFlats },
-          { label: 'Vacant',      value: stats.vacantFlats },
-          { label: 'Residents',   value: stats.totalResidents },
-        ].map(s => (
-          <div key={s.label} className="bg-white rounded-2xl p-4 border border-gray-200/70 shadow-sm">
-            <p className="text-2xl font-semibold tracking-tight tabular-nums text-gray-900">{s.value}</p>
-            <p className="text-sm text-gray-500 mt-1">{s.label}</p>
+        <div className="relative overflow-hidden bg-hero rounded-3xl p-6 sm:p-8 shadow-xl shadow-blue-900/20">
+          <div className="absolute inset-0 bg-grid opacity-50" />
+          <div className="relative flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/15 ring-1 ring-white/25 flex items-center justify-center flex-shrink-0">
+              <Home size={24} className="text-white" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sun-300">Block</p>
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white truncate">{wing.name}</h1>
+              <p className="text-sm text-white/70">{wing.society.name}</p>
+            </div>
           </div>
-        ))}
+          <div className="relative grid grid-cols-2 lg:grid-cols-4 gap-3 mt-7">
+            {[
+              { label: 'Units', value: stats.totalFlats, icon: Home },
+              { label: 'Occupied', value: stats.occupiedFlats, icon: UserCheck },
+              { label: 'Vacant', value: stats.vacantFlats, icon: DoorOpen },
+              { label: 'Residents', value: stats.totalResidents, icon: Users },
+            ].map(s => (
+              <div key={s.label} className="rounded-2xl bg-white/10 ring-1 ring-white/15 backdrop-blur-sm px-4 py-3.5 flex items-center gap-3">
+                <span className="w-9 h-9 rounded-xl bg-white/15 text-sun-300 flex items-center justify-center flex-shrink-0"><s.icon size={17} /></span>
+                <div>
+                  <p className="text-xl font-semibold text-white tabular-nums leading-tight">{s.value.toLocaleString('en-IN')}</p>
+                  <p className="text-[11px] text-white/60">{s.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Secretary section */}
@@ -281,51 +371,105 @@ export default function WingDetailPage() {
         )}
       </div>
 
-      {/* Flats list */}
+      {/* Units */}
       <div className="bg-white rounded-2xl border border-gray-200/70 shadow-sm">
-        <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h2 className="text-base font-semibold text-gray-900">Flats ({wing.flats.length})</h2>
-            <button
-              onClick={() => setShowImport(true)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 px-2.5 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-50"
-            >
-              <FileSpreadsheet size={14} /> Import from Excel
-            </button>
+        <div className="p-5 border-b border-gray-100 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">Units ({wing.flats.length})</h2>
+              <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-emerald-500 rounded-full" /> Occupied {stats.occupiedFlats}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-gray-300 rounded-full" /> Vacant {stats.vacantFlats}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowImport(true)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-blue-700 px-3 py-2 rounded-xl border border-blue-100 hover:bg-blue-50">
+                <FileSpreadsheet size={14} /> Import Excel
+              </button>
+              <button onClick={() => setShowAddUnit(true)}
+                className="flex items-center gap-1.5 text-xs font-semibold bg-blue-600 text-white px-3 py-2 rounded-xl hover:bg-blue-700">
+                <Plus size={14} /> Add unit
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-4 text-xs text-gray-400">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 bg-green-500 rounded-full" /> Occupied ({stats.occupiedFlats})
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 bg-gray-300 rounded-full" /> Vacant ({stats.vacantFlats})
-            </span>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search unit, resident or phone…"
+                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
+            </div>
+            <div className="flex gap-2">
+              <div className="flex p-1 bg-gray-100 rounded-xl gap-0.5">
+                {(['ALL', 'OCCUPIED', 'VACANT'] as const).map(o => (
+                  <button key={o} onClick={() => setOccupancy(o)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${occupancy === o ? 'bg-white text-blue-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                    {o === 'ALL' ? 'All' : o === 'OCCUPIED' ? 'Occupied' : 'Vacant'}
+                  </button>
+                ))}
+              </div>
+              <div className="flex p-1 bg-gray-100 rounded-xl gap-0.5">
+                {([['map', LayoutGrid], ['list', List]] as const).map(([v, Icon]) => (
+                  <button key={v} onClick={() => setUnitView(v)} aria-label={`${v} view`}
+                    className={`p-1.5 rounded-lg ${unitView === v ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-400 hover:text-gray-700'}`}>
+                    <Icon size={15} />
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
         {wing.flats.length === 0 ? (
           <div className="p-12 text-center text-gray-400">
             <Home size={32} className="mx-auto mb-2 opacity-40" />
-            <p className="text-sm">No flats generated yet</p>
+            <p className="text-sm">No units yet</p>
+            <button onClick={() => setShowAddUnit(true)} className="mt-2 text-sm font-semibold text-blue-600 hover:underline">Add a unit</button>
+          </div>
+        ) : visibleFlats.length === 0 ? (
+          <p className="p-10 text-center text-sm text-gray-400">No units match.</p>
+        ) : unitView === 'map' ? (
+          <div className="p-5 space-y-4">
+            {floors.map(([floor, list]) => (
+              <div key={floor} className="flex gap-3">
+                <div className="w-16 flex-shrink-0 pt-2">
+                  <p className="text-xs font-semibold text-gray-700">{floorLabel(floor)}</p>
+                  <p className="text-[11px] text-gray-400">{list.length} unit{list.length === 1 ? '' : 's'}</p>
+                </div>
+                <div className="flex-1 grid grid-cols-[repeat(auto-fill,minmax(112px,1fr))] gap-2">
+                  {list.map(flat => {
+                    const residents = flat.users.filter(u => u.role === 'RESIDENT');
+                    const occupied = flat.users.length > 0;
+                    return (
+                      <div key={flat.id} title={residents.map(r => `${r.name} (${r.phone})`).join('\n') || 'Vacant'}
+                        className={`rounded-xl px-3 py-2 ring-1 ring-inset ${occupied ? 'bg-emerald-50/70 ring-emerald-200' : 'bg-gray-50 ring-gray-200/70'}`}>
+                        <p className={`text-sm font-semibold tabular-nums truncate ${occupied ? 'text-emerald-800' : 'text-gray-500'}`}>{flat.number}</p>
+                        <p className="text-[11px] text-gray-500 truncate">{residents.length ? residents.map(r => r.name).join(', ') : 'Vacant'}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
-            {wing.flats.map(flat => {
+            {visibleFlats.map(flat => {
               const residents = flat.users.filter(u => u.role === 'RESIDENT');
               const occupied = flat.users.length > 0;
               return (
-                <div key={flat.id} className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                <div key={flat.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`min-w-12 h-9 px-2 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                       occupied ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/15' : 'bg-gray-50 text-gray-400'
                     }`}>
                       {flat.number}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
                         {residents.length > 0 ? residents.map(r => r.name).join(', ') : 'Vacant'}
                       </p>
-                      <p className="text-xs text-gray-400">Floor {flat.floor}</p>
+                      <p className="text-xs text-gray-400">{floorLabel(flat.floor)}</p>
                     </div>
                   </div>
                   <span className={`text-xs font-medium px-2 py-1 rounded-full ${
@@ -340,6 +484,9 @@ export default function WingDetailPage() {
         )}
       </div>
 
+      {showAddUnit && (
+        <AddUnitModal wingId={wing.id} onClose={() => setShowAddUnit(false)} onSuccess={() => { setShowAddUnit(false); fetchWing(); }} />
+      )}
       {showImport && (
         <ImportResidentsModal wingId={wing.id} wingName={wing.name} onClose={() => setShowImport(false)} onDone={fetchWing} />
       )}

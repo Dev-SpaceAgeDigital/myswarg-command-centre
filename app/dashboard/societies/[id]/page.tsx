@@ -2,12 +2,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  ArrowLeft, Building2, Home, Plus, X, ChevronRight,
+  ArrowLeft, Building2, Home, Plus, X, ChevronRight, Users, MapPin,
   CreditCard, Edit2, AlertCircle, Phone, Trash2, ShieldCheck, Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import ActivationCodeModal, { CodeEntry } from '@/components/ActivationCodeModal';
+import AddBlockModal from '@/components/structure/AddBlockModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -125,165 +126,6 @@ function EditSocietyModal({
           <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 bg-white shadow-xs rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
           <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
             {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Add Wing Modal ───────────────────────────────────────────────────────────
-
-const LAYOUT_TYPES = [
-  { value: 'FLOORS', label: 'Apartment building', sublabel: 'Multiple floors, flats stacked per floor' },
-  { value: 'UNITS', label: 'Villas / Bungalows / Row houses', sublabel: 'Single-level units side by side, no floors' },
-] as const;
-
-function AddWingModal({
-  societyId, onClose, onSuccess,
-}: { societyId: string; onClose: () => void; onSuccess: () => void }) {
-  const [form, setForm] = useState({
-    name: '', layoutType: 'FLOORS' as 'FLOORS' | 'UNITS',
-    floors: '', flatsPerFloor: '', totalUnits: '', unitLabel: '',
-    secretaryName: '', secretaryPhone: '',
-  });
-  const [issued, setIssued] = useState<CodeEntry[] | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, [k]: e.target.value }));
-  const totalFlats = form.layoutType === 'FLOORS'
-    ? (form.floors && form.flatsPerFloor ? Number(form.floors) * Number(form.flatsPerFloor) : 0)
-    : (form.totalUnits ? Number(form.totalUnits) : 0);
-
-  const handleSubmit = async () => {
-    if (!form.name) { setError('Wing name is required'); return; }
-    if (form.layoutType === 'FLOORS' && (!form.floors || !form.flatsPerFloor)) {
-      setError('Total floors and flats per floor are required'); return;
-    }
-    if (form.layoutType === 'UNITS' && !form.totalUnits) {
-      setError('Total number of units is required'); return;
-    }
-    setSubmitting(true);
-    try {
-      const payload: Record<string, unknown> = {
-        name: form.name, society_id: societyId,
-        layout_type: form.layoutType,
-        auto_generate_flats: true,
-      };
-      if (form.layoutType === 'FLOORS') {
-        payload.total_floors = Number(form.floors);
-        payload.flats_per_floor = Number(form.flatsPerFloor);
-      } else {
-        payload.total_units = Number(form.totalUnits);
-        if (form.unitLabel) payload.unit_label = form.unitLabel;
-      }
-      if (form.secretaryName && form.secretaryPhone) {
-        payload.secretary_name = form.secretaryName;
-        payload.secretary_phone = form.secretaryPhone;
-      }
-      const res = await api.post('/superadmin/wings', payload);
-      toast.success(`Wing "${form.name}" created`);
-      const d = res.data?.data ?? {};
-      if (d.secretaryError) toast.error(`Secretary not added: ${d.secretaryError}`);
-      if (d.secretaryActivation) {
-        setIssued([{ name: form.secretaryName, phone: form.secretaryPhone, activation: d.secretaryActivation }]);
-      } else {
-        onSuccess();
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create wing');
-    } finally { setSubmitting(false); }
-  };
-
-  if (issued) {
-    return <ActivationCodeModal title="Share with the Secretary" entries={issued} onClose={onSuccess} />;
-  }
-
-  return (
-    <div className="modal-backdrop fixed inset-0 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl ring-1 ring-gray-900/5 w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-semibold tracking-tight text-gray-900">Add Wing</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X size={18} className="text-gray-500" /></button>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Wing Name *</label>
-            <input value={form.name} onChange={set('name')} placeholder="e.g. Tower-A or Greenwood Villas"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-2">Layout *</label>
-            <div className="grid grid-cols-1 gap-2">
-              {LAYOUT_TYPES.map(lt => (
-                <button
-                  key={lt.value}
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, layoutType: lt.value }))}
-                  className={`text-left px-3 py-2.5 rounded-xl border text-sm transition-colors ${
-                    form.layoutType === lt.value
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  <p className="font-medium text-gray-900">{lt.label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{lt.sublabel}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {form.layoutType === 'FLOORS' ? (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Total Floors *</label>
-                <input type="number" min={1} value={form.floors} onChange={set('floors')} placeholder="e.g. 10"
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Flats per Floor *</label>
-                <input type="number" min={1} value={form.flatsPerFloor} onChange={set('flatsPerFloor')} placeholder="e.g. 4"
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Total Units *</label>
-                <input type="number" min={1} value={form.totalUnits} onChange={set('totalUnits')} placeholder="e.g. 40"
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Unit Label</label>
-                <input value={form.unitLabel} onChange={set('unitLabel')} placeholder="Defaults to wing name"
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
-              </div>
-            </div>
-          )}
-          {totalFlats > 0 && (
-            <p className="text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
-              Will auto-generate <strong>{totalFlats} flat{totalFlats !== 1 ? 's' : ''}</strong>
-              {form.layoutType === 'UNITS' && (
-                <> — numbered {(form.unitLabel || form.name || 'Unit')}-01 through {(form.unitLabel || form.name || 'Unit')}-{String(totalFlats).padStart(2, '0')}</>
-              )}
-            </p>
-          )}
-          <div className="border-t border-gray-100 pt-4">
-            <p className="text-sm font-medium text-gray-700 mb-3">Secretary (Optional)</p>
-            <div className="grid grid-cols-2 gap-3">
-              <input value={form.secretaryName} onChange={set('secretaryName')} placeholder="Secretary name"
-                className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
-              <input value={form.secretaryPhone} onChange={set('secretaryPhone')} placeholder="10-digit mobile" maxLength={10}
-                className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
-            </div>
-          </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
-        </div>
-        <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 bg-white shadow-xs rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-          <button onClick={handleSubmit} disabled={submitting} className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
-            {submitting ? 'Creating...' : 'Create Wing'}
           </button>
         </div>
       </div>
@@ -444,6 +286,7 @@ export default function SocietyDetailPage() {
   };
 
   const totalFlats = society.wings.reduce((sum, w) => sum + (w.flatsCount ?? 0), 0);
+  const totalResidents = society.wings.reduce((sum, w) => sum + (w.residentCount ?? 0), 0);
   const daysLeft = getDaysLeft(society.subscriptionEnd);
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0);
   const allSecretaries = Object.values(wingSecretaries).flat();
@@ -454,51 +297,60 @@ export default function SocietyDetailPage() {
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
-    { key: 'wings', label: `Wings (${society.wings.length})` },
+    { key: 'wings', label: `Blocks (${society.wings.length})` },
     { key: 'financials', label: 'Financials' },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       {/* Header */}
       <div>
         <button onClick={() => router.push('/dashboard/societies')}
-          className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 mb-4 transition-colors">
-          <ArrowLeft size={16} /> Back to Societies
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors">
+          <ArrowLeft size={16} /> All societies
         </button>
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-tight text-gray-900 truncate">{society.name}</h1>
-            <p className="text-sm text-gray-500 mt-1">{society.address} · {society.city}, {society.state}{society.pinCode ? ` - ${society.pinCode}` : ''}</p>
+        <div className="relative overflow-hidden bg-hero rounded-3xl p-6 sm:p-8 shadow-xl shadow-blue-900/20">
+          <div className="absolute inset-0 bg-grid opacity-50" />
+          <div className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="flex items-start gap-4 min-w-0">
+              <div className="w-14 h-14 rounded-2xl bg-white/15 ring-1 ring-white/25 flex items-center justify-center flex-shrink-0">
+                <Building2 size={26} className="text-white" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white truncate">{society.name}</h1>
+                <p className="text-sm text-white/70 mt-1 flex items-start gap-1.5">
+                  <MapPin size={14} className="mt-0.5 flex-shrink-0" />
+                  <span>{society.address} · {society.city}, {society.state}{society.pinCode ? ` - ${society.pinCode}` : ''}</span>
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusColor}`}>
+                ● {society.subscriptionStatus}
+              </span>
+              <button onClick={() => setShowEdit(true)}
+                className="flex items-center gap-1.5 bg-white/10 ring-1 ring-white/25 text-white px-3 py-1.5 rounded-xl text-sm font-medium hover:bg-white/20">
+                <Edit2 size={14} /> Edit
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor}`}>
-              ● {society.subscriptionStatus}
-            </span>
-            <button onClick={() => setShowEdit(true)}
-              className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-xl text-sm hover:bg-gray-50">
-              <Edit2 size={14} /> Edit
-            </button>
+          <div className="relative grid grid-cols-2 lg:grid-cols-4 gap-3 mt-7">
+            {[
+              { label: 'Blocks', value: society.wings.length, icon: Building2 },
+              { label: 'Units', value: totalFlats.toLocaleString('en-IN'), icon: Home },
+              { label: 'Residents', value: totalResidents.toLocaleString('en-IN'), icon: Users },
+              { label: daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} days left` : 'Expired') : 'Plan', value: society.planType ?? 'STARTER', icon: CreditCard },
+            ].map((s) => (
+              <div key={s.label} className="rounded-2xl bg-white/10 ring-1 ring-white/15 backdrop-blur-sm px-4 py-3.5 flex items-center gap-3">
+                <span className="w-9 h-9 rounded-xl bg-white/15 text-sun-300 flex items-center justify-center flex-shrink-0"><s.icon size={17} /></span>
+                <div className="min-w-0">
+                  <p className="text-xl font-semibold text-white tabular-nums leading-tight truncate">{s.value}</p>
+                  <p className="text-[11px] text-white/60 truncate">{s.label}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Total Wings',    value: society.wings.length, icon: Building2, color: 'text-blue-600',   bg: 'bg-blue-50'   },
-          { label: 'Total Flats',    value: totalFlats,           icon: Home,      color: 'text-purple-600', bg: 'bg-purple-50' },
-          { label: daysLeft !== null ? (daysLeft > 0 ? `${daysLeft}d left` : 'Expired') : society.subscriptionStatus,
-            value: society.planType ?? 'STARTER', icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-50' },
-        ].map((s, i) => (
-          <div key={i} className="bg-white rounded-2xl p-5 border border-gray-200/70 shadow-sm hover:shadow-md transition-shadow">
-            <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center mb-3`}>
-              <s.icon size={18} className={s.color} />
-            </div>
-            <p className="text-2xl font-semibold tracking-tight tabular-nums text-gray-900">{s.value}</p>
-            <p className="text-sm text-gray-500 mt-1">{s.label}</p>
-          </div>
-        ))}
       </div>
 
       {/* Tabs */}
@@ -627,63 +479,77 @@ export default function SocietyDetailPage() {
         </div>
       )}
 
-      {/* ── Wings tab ── */}
+      {/* ── Blocks tab ── */}
       {tab === 'wings' && (
-        <div className="bg-white rounded-2xl border border-gray-200/70 shadow-sm">
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
-            <h2 className="text-base font-semibold text-gray-900">Wings ({society.wings.length})</h2>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">Blocks</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Towers, wings, bungalow lanes, tenements and plots in this society</p>
+            </div>
             <button onClick={() => setShowAddWing(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-xl text-sm font-medium hover:bg-blue-700">
-              <Plus size={15} /> Add Wing
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700">
+              <Plus size={15} /> Add block
             </button>
           </div>
           {society.wings.length === 0 ? (
-            <div className="p-12 text-center">
-              <Home size={40} className="mx-auto mb-3 text-gray-200" />
-              <p className="text-gray-500 text-sm">No wings yet</p>
-              <button onClick={() => setShowAddWing(true)} className="mt-3 text-sm text-blue-600 hover:underline">
-                Add the first wing
+            <div className="bg-white rounded-3xl border border-dashed border-gray-300 p-12 text-center">
+              <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-blue-50 ring-1 ring-inset ring-blue-100 flex items-center justify-center">
+                <Home size={24} className="text-blue-500" />
+              </div>
+              <p className="text-gray-800 font-semibold">No blocks yet</p>
+              <p className="text-sm text-gray-500 mt-1">Add a tower, a lane of bungalows, tenements or plots.</p>
+              <button onClick={() => setShowAddWing(true)} className="mt-4 inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700">
+                <Plus size={15} /> Add the first block
               </button>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {society.wings.map(wing => {
                 const secs = wingSecretaries[wing.id] || [];
                 const primary = secs.find(s => s.isPrimary) || secs[0];
+                const occ = wing.flatsCount ? Math.min(100, Math.round(((wing.residentCount ?? 0) / wing.flatsCount) * 100)) : 0;
                 return (
-                  <div key={wing.id} className="flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
-      {issuedCodes && <ActivationCodeModal title="Share with the Secretary" entries={issuedCodes} onClose={() => setIssuedCodes(null)} />}
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-blue-50 ring-1 ring-inset ring-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Home size={18} className="text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{wing.name}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {primary ? `${primary.name} · ${primary.phone}` : 'No secretary assigned'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-center hidden sm:block">
-                        <p className="text-sm font-semibold text-gray-900">{wing.flatsCount ?? 0}</p>
-                        <p className="text-xs text-gray-400">Flats</p>
-                      </div>
-                      <div className="text-center hidden sm:block">
-                        <p className="text-sm font-semibold text-gray-900">{wing.residentCount ?? 0}</p>
-                        <p className="text-xs text-gray-400">Residents</p>
+                  <div key={wing.id} onClick={() => router.push(`/dashboard/societies/${id}/wings/${wing.id}`)}
+                    className="group bg-white rounded-2xl border border-gray-200/70 shadow-sm p-5 hover:shadow-lg hover:-translate-y-0.5 hover:border-blue-200 transition-all cursor-pointer">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-600/20">
+                          <Home size={18} className="text-white" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-900 truncate">{wing.name}</p>
+                          <p className="text-xs text-gray-500 truncate mt-0.5">
+                            {primary ? `${primary.name} · ${primary.phone}` : 'No secretary yet'}
+                          </p>
+                        </div>
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); setWingToDelete(wing); setShowDeleteWing(true); }}
                         className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete wing"
+                        title="Delete block" aria-label={`Delete ${wing.name}`}
                       >
                         <Trash2 size={15} />
                       </button>
-                      <button onClick={() => router.push(`/dashboard/societies/${id}/wings/${wing.id}`)}
-                        className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium">
-                        View Wing <ChevronRight size={14} />
-                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mt-4">
+                      <div className="px-3 py-2 bg-gray-50 ring-1 ring-inset ring-gray-100 rounded-xl">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Units</p>
+                        <p className="text-lg font-semibold tabular-nums text-gray-900">{wing.flatsCount ?? 0}</p>
+                      </div>
+                      <div className="px-3 py-2 bg-gray-50 ring-1 ring-inset ring-gray-100 rounded-xl">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Residents</p>
+                        <p className="text-lg font-semibold tabular-nums text-gray-900">{wing.residentCount ?? 0}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                      <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-400" style={{ width: `${occ}%` }} />
+                    </div>
+                    <div className="flex items-center justify-between mt-3 text-xs">
+                      <span className="text-gray-500">{occ}% occupied</span>
+                      <span className="flex items-center gap-1 font-semibold text-blue-600">
+                        Open <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                      </span>
                     </div>
                   </div>
                 );
@@ -750,8 +616,10 @@ export default function SocietyDetailPage() {
         </div>
       )}
 
+      {issuedCodes && <ActivationCodeModal title="Share with the Secretary" entries={issuedCodes} onClose={() => setIssuedCodes(null)} />}
       {showAddWing && (
-        <AddWingModal societyId={id} onClose={() => setShowAddWing(false)} onSuccess={() => { fetchData(); setShowAddWing(false); }} />
+        <AddBlockModal societyId={id} existingNames={society.wings.map((w) => w.name)}
+          onClose={() => setShowAddWing(false)} onSuccess={() => { fetchData(); setShowAddWing(false); }} />
       )}
       {showEdit && society && (
         <EditSocietyModal society={society} onClose={() => setShowEdit(false)} onSuccess={() => { fetchData(); setShowEdit(false); }} />
